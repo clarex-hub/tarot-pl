@@ -1588,15 +1588,13 @@ async function getGeminiInterpretation(retryCount = 0) {
     // Anioły Stróże — Kapłanka (id:2), Kapłan (id:5), Gwiazda (id:17)
     const guardianAngels = drawnCards.filter(c => [2, 5, 17].includes(c.id));
     if (guardianAngels.length > 0) {
-        moodAnalysis += `\n✨ ANIOŁY STRÓŻE W UKŁADZIE: ${guardianAngels.map(c => c.name).join(', ')}\n`;
-        moodAnalysis += `Obecność ${guardianAngels.length > 1 ? 'Aniołów Stróżów podnosi' : 'Anioła Stróża podnosi'} pozytywny nastrój całego układu. Dobre karty działają jeszcze silniej, a negatywne karty tracą swoją ostrość — nie tworzą wielkich problemów, a jedynie chwilowe nieprzyjemności lub łagodne ostrzeżenia.\n`;
+        moodAnalysis += `\n✨ ANIOŁY STRÓŻE W UKŁADZIE: ${guardianAngels.map(c => c.name).join(', ')} (zastosuj regułę Aniołów Stróżów — patrz zasady uniwersalne)\n`;
     }
 
     // Karty Powodzenia — Słońce (id:19), Świat (id:21)
     const fortuneCards = drawnCards.filter(c => [19, 21].includes(c.id));
     if (fortuneCards.length > 0) {
-        moodAnalysis += `\n🌟 KARTY POWODZENIA W UKŁADZIE: ${fortuneCards.map(c => c.name).join(', ')}\n`;
-        moodAnalysis += `Obecność ${fortuneCards.length > 1 ? 'Kart Powodzenia gwarantuje' : 'Karty Powodzenia gwarantuje'} pomyślny wynik w każdej sprawie. Nawet najbardziej negatywne karty w układzie nie są w stanie zablokować sukcesu — mogą jedynie wskazywać na przeszkody, które zostaną pokonane.\n`;
+        moodAnalysis += `\n🌟 KARTY POWODZENIA W UKŁADZIE: ${fortuneCards.map(c => c.name).join(', ')} (zastosuj regułę Kart Powodzenia — patrz zasady uniwersalne)\n`;
     }
 
     function getCardValue(card) {
