@@ -389,12 +389,16 @@
 <script>
 // ===== BEZPIECZNY ODCZYT localStorage =====
 // Uszkodzony JSON w localStorage nie moze wywalic calej apki (bialy ekran).
-// Zwraca sparsowana wartosc, a przy braku klucza lub bledzie parsowania — fallback.
-function loadLS(key, fallback = null) {
+// Zwraca sparsowana wartosc, a przy braku klucza, bledzie parsowania lub
+// niezgodnym typie (expect: 'array' | 'object') — fallback.
+function loadLS(key, fallback = null, expect = null) {
     try {
         const raw = localStorage.getItem(key);
         if (raw === null) return fallback;
-        return JSON.parse(raw);
+        const val = JSON.parse(raw);
+        if (expect === 'array' && !Array.isArray(val)) return fallback;
+        if (expect === 'object' && (val === null || typeof val !== 'object' || Array.isArray(val))) return fallback;
+        return val;
     } catch (e) {
         console.warn('Uszkodzony wpis localStorage, wracam do domyslnych:', key, e);
         return fallback;
@@ -424,7 +428,7 @@ function formatAiHtml(text) {
 }
 
 // ===== DANE KART =====
-let cards = loadLS('tarot_cards') || [
+let cards = loadLS('tarot_cards', null, 'array') || [
     { id: 0, name: "Głupiec", nameEn: "The Fool", suit: null, image: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", keywords: ["wolność", "nowe początki", "spontaniczność", "przygoda", "potencjał"], description: "Głupiec to karta absolutnego początku, czysta energia startowa bez ciężaru przeszłości. Symbolizuje skok w nieznane z ufnością i radością dziecka. To archetyp wędrowca stojącego na skraju przepaści — gotowego zrobić krok, który zmieni wszystko. Karta zwiastuje nowy etap życia, niespodziewaną podróż lub przełomową decyzję. Jej energia jest lekka, swobodna i pełna możliwości. Głupiec nie zna strachu, bo nie zna jeszcze ograniczeń. Pojawia się, gdy nadszedł czas porzucić stare schematy i zaufać przepływowi życia.", spiritual: "Na poziomie duchowym Głupiec to Dusza wchodząca w nowe wcielenie — czysta, nieobciążona karmą, gotowa na przygodę. Biała róża w jego dłoni symbolizuje niewinność i czystość intencji. Torba na kiju zawiera całe jego poprzednie doświadczenia, ale on nie zagląda do niej — idzie naprzód. Głupiec uczy, że prawdziwa mądrość zaczyna się od odwagi bycia nowicjuszem. Jest to energia Zerowego Punktu, miejsce między-stanów, z którego może narodzić się wszystko.", advice: "Zaufaj intuicji i zrób ten krok, który tak długo odkładałeś. To dobry czas na nowe projekty, podróże i odważne decyzje. Działaj z lekkością — nie każda ścieżka musi być zaplanowana.", warning: "Uważaj na nadmierną pochopność i ignorowanie praktycznych realiów. Entuzjazm bez refleksji może prowadzić do kosztownych błędów. Zachowaj balans między spontanicznością a zdrowym rozsądkiem." },
     { id: 1, name: "Mag", nameEn: "The Magician", suit: null, image: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg", keywords: ["wola", "manifestacja", "umiejętności", "komunikacja", "skupienie"], description: "Mag to karta kreacji i manifestacji — człowieka, który ma wszystkie narzędzia i potrafi je użyć. Symbolizuje zdolność przekształcania idei w rzeczywistość poprzez skupioną wolę i działanie. Na stole przed nim leżą cztery narzędzia — buława, kielich, miecz i pentakl — symbol czterech żywiołów gotowych do jego dyspozycji. Wskazuje prawą ręką ku niebu, lewą ku ziemi, uosabiając zasadę: 'Jak w górze, tak i na dole'. Karta zwiastuje czas działania, kiedy wszystkie zasoby są dostępne. To energia inicjatywy, przedsiębiorczości i skuteczności.", spiritual: "Archetyp Maga to człowiek-kapłan stojący między światem boskim a materialnym, będący kanałem boskiej woli. Jego nieskończoność nad głową (symbol ∞) wskazuje na połączenie z wyższymi siłami. W tradycji hermetycznej Mag to Hermes Trismegistus — mistrz alchemii, który zamienia ołów w złoto. Karta uczy, że prawdziwa magia polega na koncentracji uwagi: energia podąża za intencją. Gdzie skupisz swoją wolę — tam zmaterializuje się rzeczywistość.", advice: "Działaj teraz — masz wszelkie zasoby, by osiągnąć cel. Skoncentruj się na jednym priorytecie zamiast rozpraszać energię. Twoje słowa i komunikacja mają dziś szczególną moc.", warning: "Unikaj manipulacji i wykorzystywania swoich zdolności do nieuczciwych celów. Moc bez etyki niszczy jej posiadacza. Sprawdź, czy Twoje ambicje służą wyższemu celowi." },
     { id: 2, name: "Kapłanka", nameEn: "The High Priestess", suit: null, image: "https://upload.wikimedia.org/wikipedia/commons/8/88/RWS_Tarot_02_High_Priestess.jpg", keywords: ["intuicja", "tajemnica", "podświadomość", "wiedza ezoteryczna", "cisza"], description: "Kapłanka to karta głębokiej intuicji i dostępu do ukrytej wiedzy. Siedzi między dwiema kolumnami — czarną (B — Boaz, ciemność) i białą (J — Jakin, światło), symbolizując równowagę między przeciwnościami. Za nią wisi zasłona z granatami, oddzielająca świat widzialny od niewidzialnego. Trzyma pergamin Tory — symbolizując ukrytą wiedzę, która ujawnia się tylko wtajemniczonym. Karta wskazuje na czas słuchania wewnętrznego głosu zamiast działania. Coś ważnego pozostaje ukryte — dopiero cisza i cierpliwość przyniosą objawienie.", spiritual: "Kapłanka to Anima, żeńska zasada kosmiczna, Sofía — boska Mądrość. Jest strażniczką progu między świadomością a nieświadomością zbiorową. Półksiężyc u jej stóp symbolizuje panowanie nad cyklem czasu. Karta uczy, że istnieje wiedza, której nie da się zdobyć intelektem — tylko przez ciszę, medytację i zaufanie nadchodzącej całości. To czas introspekcji, snów i synchroniczności.", advice: "Zatrzymaj się i wsłuchaj w swój wewnętrzny głos. Odpowiedź, której szukasz, jest już w Tobie. Medytuj, prowadź dziennik snów, ufaj przeczuciom.", warning: "Nie izoluj się nadmiernie od świata i innych ludzi. Kapłanka może wskazywać na tendencję do nadmiernej tajemniczości lub unikania koniecznych decyzji pod pozorem 'czekania na znak'." },
@@ -686,17 +690,17 @@ let savedVersion = parseInt(localStorage.getItem('tarot_spreads_version')) || 0;
 let spreads;
 
 if (savedVersion < SPREADS_VERSION) {
-    let oldSpreads = loadLS('tarot_spreads') || [];
+    let oldSpreads = loadLS('tarot_spreads', null, 'array') || [];
     let customSpreads = oldSpreads.filter(s => s.id > 1000);
     spreads = [...defaultSpreads, ...customSpreads];
     localStorage.setItem('tarot_spreads', JSON.stringify(spreads));
     localStorage.setItem('tarot_spreads_version', SPREADS_VERSION);
 } else {
-    spreads = loadLS('tarot_spreads') || defaultSpreads;
+    spreads = loadLS('tarot_spreads', null, 'array') || defaultSpreads;
 }
 
-let history = loadLS('tarot_history') || [];
-let settings = loadLS('tarot_settings') || { password: 'tarot2024', geminiApiKey: '', openRouterApiKey: '' };
+let history = loadLS('tarot_history', null, 'array') || [];
+let settings = loadLS('tarot_settings', null, 'object') || { password: 'tarot2024', geminiApiKey: '', openRouterApiKey: '' };
 if (!('openRouterApiKey' in settings)) { settings.openRouterApiKey = ''; }
 let currentSpread = null, drawnCards = [], revealedCards = [];
 let userQuestion = '';
