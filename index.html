@@ -1311,7 +1311,7 @@ STYL:
         if (response.status === 429) {
             const errBody = await response.json().catch(() => ({}));
             const errMsg = errBody?.error?.message || '';
-            const isDailyLimit = errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('exhausted') || errMsg.toLowerCase().includes('day');
+            const isDailyLimit = isGeminiDailyLimit(errBody);
             if (isDailyLimit) {
                 const result = await callOpenRouterStream(prompt, maxOutputTokens, null, null, content, 'runComplexAnalysis()');
                 if (result === false) return;
@@ -1457,6 +1457,34 @@ function saveOpenRouterKey() {
     settings.openRouterApiKey = document.getElementById('or-api-key').value.trim();
     localStorage.setItem('tarot_settings', JSON.stringify(settings));
     document.getElementById('or-msg').innerHTML = '<div class="alert alert-success">Klucz OpenRouter zapisany!</div>';
+}
+
+// === KLASYFIKACJA 429 Z GEMINI ===
+// Rozróżnia limit DZIENNY (wyczerpana darmowa pula na dobę → fallback na OpenRouter)
+// od limitu NA MINUTĘ (przejściowy rate-limit → retry i pozostajemy na Gemini).
+// Free tier zwraca słowo "quota" w komunikacie w OBU przypadkach, dlatego samego
+// tekstu message nie da się użyć — decyduje quotaId/quotaMetric z error.details.
+function isGeminiDailyLimit(errBody) {
+    let sawPerMinute = false, sawPerDay = false;
+    try {
+        const details = errBody?.error?.details || [];
+        for (const d of details) {
+            const violations = d?.violations || [];
+            for (const v of violations) {
+                const id = ((v.quotaId || '') + ' ' + (v.quotaMetric || '')).toLowerCase();
+                if (id.includes('perminute') || id.includes('per_minute')) sawPerMinute = true;
+                if (id.includes('perday') || id.includes('per_day')) sawPerDay = true;
+            }
+        }
+    } catch (e) { /* ignorujemy */ }
+    if (sawPerDay) return true;      // wyraźny limit dobowy → OpenRouter
+    if (sawPerMinute) return false;  // wyraźny limit na minutę → retry Gemini
+    // Brak jednoznacznego quotaId — patrzymy na tekst, ale tylko na wyraźne sygnały dobowe
+    const msg = (errBody?.error?.message || '').toLowerCase();
+    if (msg.includes('per minute') || msg.includes('perminute')) return false;
+    if (msg.includes('per day') || msg.includes('perday') || msg.includes('daily')) return true;
+    // Domyślnie: traktuj jako limit na minutę → retry, NIE od razu OpenRouter
+    return false;
 }
 
 // === OPENROUTER STREAM ===
@@ -1628,7 +1656,7 @@ Jedno krótkie zdanie-przestroga. Bez straszenia.`;
         if (response.status === 429) {
             const errBody = await response.json().catch(() => ({}));
             const errMsg = errBody?.error?.message || '';
-            const isDailyLimit = errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('exhausted') || errMsg.toLowerCase().includes('day');
+            const isDailyLimit = isGeminiDailyLimit(errBody);
             if (isDailyLimit) {
                 const result = await callOpenRouterStream(prompt, 4096, null, null, content, `getPracticalInterpretation(${cardId}, 0)`);
                 if (result === false) return;
@@ -2008,7 +2036,7 @@ STYL:
         if (response.status === 429) {
             const errBody = await response.json().catch(() => ({}));
             const errMsg = errBody?.error?.message || '';
-            const isDailyLimit = errMsg.toLowerCase().includes('quota') || errMsg.toLowerCase().includes('exhausted') || errMsg.toLowerCase().includes('day');
+            const isDailyLimit = isGeminiDailyLimit(errBody);
             if (isDailyLimit) {
                 const result = await callOpenRouterStream(prompt, maxOutputTokens, null, null, content, 'getGeminiInterpretation(0)');
                 if (result === false) return;
