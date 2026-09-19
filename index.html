@@ -417,7 +417,9 @@ function esc(s) {
     return String(s)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 }
 // Wspolny formatter streamu AI: NAJPIERW esc(), POTEM markdown.
 // Uwaga na kolejnosc: ### (h4) przed ## (h3), inaczej "## " zlapaloby ###.
@@ -2037,7 +2039,7 @@ STYL:
         if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
         
         content.innerHTML = `
-            ${userQuestion ? `<div style="background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);border-radius:8px;padding:1rem;margin-bottom:1.5rem;"><p style="color:#a89984;font-size:0.85rem;margin:0;">Twoje pytanie:</p><p style="color:#e8d5b7;margin:0.3rem 0 0;font-style:italic;">"${userQuestion}"</p></div>` : ''}
+            ${userQuestion ? `<div style="background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);border-radius:8px;padding:1rem;margin-bottom:1.5rem;"><p style="color:#a89984;font-size:0.85rem;margin:0;">Twoje pytanie:</p><p style="color:#e8d5b7;margin:0.3rem 0 0;font-style:italic;">"${esc(userQuestion)}"</p></div>` : ''}
             <div id="streaming-text" style="line-height:1.8;"></div>
             <span id="streaming-cursor" style="display:inline-block;width:3px;height:1.2em;background:linear-gradient(180deg,#d4af37,#f4d03f);animation:blink 0.7s infinite;margin-left:3px;vertical-align:middle;box-shadow:0 0 8px #d4af37;"></span>
             <style>@keyframes blink{0%,40%{opacity:1}50%,100%{opacity:0.3}}</style>
