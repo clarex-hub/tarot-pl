@@ -867,7 +867,12 @@ function startSpread(id) {
 function drawSpread() {
     const questionInput = document.getElementById('spread-question');
     if (questionInput) userQuestion = questionInput.value.trim();
-    const shuffled = [...cards].sort(() => Math.random() - 0.5);
+    // Tasowanie Fisher-Yates — rownomierny rozklad (sort(()=>Math.random()-0.5) jest skrzywiony)
+    const shuffled = [...cards];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
     drawnCards = shuffled.slice(0, currentSpread.count);
     revealedCards = new Array(currentSpread.count).fill(false);
     renderSpreadCards();
