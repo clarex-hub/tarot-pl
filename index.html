@@ -401,6 +401,29 @@ function loadLS(key, fallback = null) {
     }
 }
 
+// ===== FORMATOWANIE ODPOWIEDZI AI =====
+// Escape HTML — usuwa wektor wstrzykniecia HTML z odpowiedzi modelu
+// i naprawia render tekstu typu "5 < 10".
+function esc(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+// Wspolny formatter streamu AI: NAJPIERW esc(), POTEM markdown.
+// Uwaga na kolejnosc: ### (h4) przed ## (h3), inaczej "## " zlapaloby ###.
+function formatAiHtml(text) {
+    const html = esc(text)
+        .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4af37;">$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/### (.+)/g, '<h4 style="color:#d4af37;margin:1.2rem 0 0.5rem;">$1</h4>')
+        .replace(/## (.+)/g, '<h3 style="color:#d4af37;font-family:Cinzel,serif;margin:1.5rem 0 0.8rem;font-size:1.2rem;">$1</h3>')
+        .replace(/# (.+)/g, '<h3 style="color:#d4af37;font-family:Cinzel,serif;margin:1.5rem 0 0.8rem;font-size:1.3rem;">$1</h3>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+    return '<p>' + html + '</p>';
+}
+
 // ===== DANE KART =====
 let cards = loadLS('tarot_cards') || [
     { id: 0, name: "Głupiec", nameEn: "The Fool", suit: null, image: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", keywords: ["wolność", "nowe początki", "spontaniczność", "przygoda", "potencjał"], description: "Głupiec to karta absolutnego początku, czysta energia startowa bez ciężaru przeszłości. Symbolizuje skok w nieznane z ufnością i radością dziecka. To archetyp wędrowca stojącego na skraju przepaści — gotowego zrobić krok, który zmieni wszystko. Karta zwiastuje nowy etap życia, niespodziewaną podróż lub przełomową decyzję. Jej energia jest lekka, swobodna i pełna możliwości. Głupiec nie zna strachu, bo nie zna jeszcze ograniczeń. Pojawia się, gdy nadszedł czas porzucić stare schematy i zaufać przepływowi życia.", spiritual: "Na poziomie duchowym Głupiec to Dusza wchodząca w nowe wcielenie — czysta, nieobciążona karmą, gotowa na przygodę. Biała róża w jego dłoni symbolizuje niewinność i czystość intencji. Torba na kiju zawiera całe jego poprzednie doświadczenia, ale on nie zagląda do niej — idzie naprzód. Głupiec uczy, że prawdziwa mądrość zaczyna się od odwagi bycia nowicjuszem. Jest to energia Zerowego Punktu, miejsce między-stanów, z którego może narodzić się wszystko.", advice: "Zaufaj intuicji i zrób ten krok, który tak długo odkładałeś. To dobry czas na nowe projekty, podróże i odważne decyzje. Działaj z lekkością — nie każda ścieżka musi być zaplanowana.", warning: "Uważaj na nadmierną pochopność i ignorowanie praktycznych realiów. Entuzjazm bez refleksji może prowadzić do kosztownych błędów. Zachowaj balans między spontanicznością a zdrowym rozsądkiem." },
@@ -1174,7 +1197,7 @@ STYL:
                             const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
                             if (text) {
                                 fullText += text;
-                                streamingText.innerHTML = fullText.replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4af37;">$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/### (.+)/g, '<h3 style="color:#d4af37;font-family:Cinzel,serif;margin:1.5rem 0 0.8rem;font-size:1.15rem;">$1</h3>').replace(/## (.+)/g, '<h3 style="color:#d4af37;font-family:Cinzel,serif;margin:1.5rem 0 0.8rem;font-size:1.2rem;">$1</h3>').replace(/# (.+)/g, '<h3 style="color:#d4af37;font-family:Cinzel,serif;margin:1.5rem 0 0.8rem;font-size:1.3rem;">$1</h3>').replace(/\n/g, '<br>');
+                                streamingText.innerHTML = formatAiHtml(fullText);
                                 content.scrollTop = content.scrollHeight;
                             }
                         } catch(e) {}
@@ -1348,8 +1371,7 @@ async function callOpenRouterStream(prompt, maxTokens, streamingEl, cursorEl, co
                         const text = data.choices?.[0]?.delta?.content;
                         if (text) {
                             fullText += text;
-                            const fmt = fullText.replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4af37;">$1</strong>').replace(/###\s*(.+)/g, '<h4 style="color:#d4af37;margin:1.2rem 0 0.5rem;">$1</h4>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-                            streamingEl.innerHTML = '<p>' + fmt + '</p>';
+                            streamingEl.innerHTML = formatAiHtml(fullText);
                         }
                     } catch(e) {}
                 }
@@ -1487,7 +1509,7 @@ Jedno krótkie zdanie-przestroga. Bez straszenia.`;
                             const data = JSON.parse(line.slice(6));
                             if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
                                 fullText += data.candidates[0].content.parts[0].text;
-                                streamingText.innerHTML = '<p>' + fullText.replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4af37;">$1</strong>').replace(/###\s*(.+)/g, '<h4 style="color:#d4af37;margin:1.2rem 0 0.5rem;">$1</h4>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
+                                streamingText.innerHTML = formatAiHtml(fullText);
                             }
                         } catch(e) {}
                     }
@@ -1833,7 +1855,7 @@ STYL:
                             const data = JSON.parse(line.slice(6));
                             if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
                                 fullText += data.candidates[0].content.parts[0].text;
-                                streamingText.innerHTML = '<p>' + fullText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/###\s*(.+)/g, '<h4 style="color:#d4af37;margin:1.2rem 0 0.5rem;">$1</h4>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
+                                streamingText.innerHTML = formatAiHtml(fullText);
                                 const modalContent = content.closest('.interpretation-box');
                                 if (modalContent) modalContent.scrollTop = modalContent.scrollHeight;
                             }
