@@ -387,8 +387,48 @@
 </div>
 
 <script>
+// ===== BEZPIECZNY ODCZYT localStorage =====
+// Uszkodzony JSON w localStorage nie moze wywalic calej apki (bialy ekran).
+// Zwraca sparsowana wartosc, a przy braku klucza, bledzie parsowania lub
+// niezgodnym typie (expect: 'array' | 'object') — fallback.
+function loadLS(key, fallback = null, expect = null) {
+    try {
+        const raw = localStorage.getItem(key);
+        if (raw === null) return fallback;
+        const val = JSON.parse(raw);
+        if (expect === 'array' && !Array.isArray(val)) return fallback;
+        if (expect === 'object' && (val === null || typeof val !== 'object' || Array.isArray(val))) return fallback;
+        return val;
+    } catch (e) {
+        console.warn('Uszkodzony wpis localStorage, wracam do domyslnych:', key, e);
+        return fallback;
+    }
+}
+
+// ===== FORMATOWANIE ODPOWIEDZI AI =====
+// Escape HTML — usuwa wektor wstrzykniecia HTML z odpowiedzi modelu
+// i naprawia render tekstu typu "5 < 10".
+function esc(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+// Wspolny formatter streamu AI: NAJPIERW esc(), POTEM markdown.
+// Uwaga na kolejnosc: ### (h4) przed ## (h3), inaczej "## " zlapaloby ###.
+function formatAiHtml(text) {
+    const html = esc(text)
+        .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4af37;">$1</strong>')
+        .replace(/### (.+)/g, '<h4 style="color:#d4af37;margin:1.2rem 0 0.5rem;">$1</h4>')
+        .replace(/## (.+)/g, '<h3 style="color:#d4af37;font-family:Cinzel,serif;margin:1.5rem 0 0.8rem;font-size:1.2rem;">$1</h3>')
+        .replace(/# (.+)/g, '<h3 style="color:#d4af37;font-family:Cinzel,serif;margin:1.5rem 0 0.8rem;font-size:1.3rem;">$1</h3>')
+        .replace(/\n\n/g, '</p><p>')
+        .replace(/\n/g, '<br>');
+    return '<p>' + html + '</p>';
+}
+
 // ===== DANE KART =====
-let cards = JSON.parse(localStorage.getItem('tarot_cards')) || [
+let cards = loadLS('tarot_cards', null, 'array') || [
     { id: 0, name: "Głupiec", nameEn: "The Fool", suit: null, image: "https://upload.wikimedia.org/wikipedia/commons/9/90/RWS_Tarot_00_Fool.jpg", keywords: ["wolność", "nowe początki", "spontaniczność", "przygoda", "potencjał"], description: "Głupiec to karta absolutnego początku, czysta energia startowa bez ciężaru przeszłości. Symbolizuje skok w nieznane z ufnością i radością dziecka. To archetyp wędrowca stojącego na skraju przepaści — gotowego zrobić krok, który zmieni wszystko. Karta zwiastuje nowy etap życia, niespodziewaną podróż lub przełomową decyzję. Jej energia jest lekka, swobodna i pełna możliwości. Głupiec nie zna strachu, bo nie zna jeszcze ograniczeń. Pojawia się, gdy nadszedł czas porzucić stare schematy i zaufać przepływowi życia.", spiritual: "Na poziomie duchowym Głupiec to Dusza wchodząca w nowe wcielenie — czysta, nieobciążona karmą, gotowa na przygodę. Biała róża w jego dłoni symbolizuje niewinność i czystość intencji. Torba na kiju zawiera całe jego poprzednie doświadczenia, ale on nie zagląda do niej — idzie naprzód. Głupiec uczy, że prawdziwa mądrość zaczyna się od odwagi bycia nowicjuszem. Jest to energia Zerowego Punktu, miejsce między-stanów, z którego może narodzić się wszystko.", advice: "Zaufaj intuicji i zrób ten krok, który tak długo odkładałeś. To dobry czas na nowe projekty, podróże i odważne decyzje. Działaj z lekkością — nie każda ścieżka musi być zaplanowana.", warning: "Uważaj na nadmierną pochopność i ignorowanie praktycznych realiów. Entuzjazm bez refleksji może prowadzić do kosztownych błędów. Zachowaj balans między spontanicznością a zdrowym rozsądkiem." },
     { id: 1, name: "Mag", nameEn: "The Magician", suit: null, image: "https://upload.wikimedia.org/wikipedia/commons/d/de/RWS_Tarot_01_Magician.jpg", keywords: ["wola", "manifestacja", "umiejętności", "komunikacja", "skupienie"], description: "Mag to karta kreacji i manifestacji — człowieka, który ma wszystkie narzędzia i potrafi je użyć. Symbolizuje zdolność przekształcania idei w rzeczywistość poprzez skupioną wolę i działanie. Na stole przed nim leżą cztery narzędzia — buława, kielich, miecz i pentakl — symbol czterech żywiołów gotowych do jego dyspozycji. Wskazuje prawą ręką ku niebu, lewą ku ziemi, uosabiając zasadę: 'Jak w górze, tak i na dole'. Karta zwiastuje czas działania, kiedy wszystkie zasoby są dostępne. To energia inicjatywy, przedsiębiorczości i skuteczności.", spiritual: "Archetyp Maga to człowiek-kapłan stojący między światem boskim a materialnym, będący kanałem boskiej woli. Jego nieskończoność nad głową (symbol ∞) wskazuje na połączenie z wyższymi siłami. W tradycji hermetycznej Mag to Hermes Trismegistus — mistrz alchemii, który zamienia ołów w złoto. Karta uczy, że prawdziwa magia polega na koncentracji uwagi: energia podąża za intencją. Gdzie skupisz swoją wolę — tam zmaterializuje się rzeczywistość.", advice: "Działaj teraz — masz wszelkie zasoby, by osiągnąć cel. Skoncentruj się na jednym priorytecie zamiast rozpraszać energię. Twoje słowa i komunikacja mają dziś szczególną moc.", warning: "Unikaj manipulacji i wykorzystywania swoich zdolności do nieuczciwych celów. Moc bez etyki niszczy jej posiadacza. Sprawdź, czy Twoje ambicje służą wyższemu celowi." },
     { id: 2, name: "Kapłanka", nameEn: "The High Priestess", suit: null, image: "https://upload.wikimedia.org/wikipedia/commons/8/88/RWS_Tarot_02_High_Priestess.jpg", keywords: ["intuicja", "tajemnica", "podświadomość", "wiedza ezoteryczna", "cisza"], description: "Kapłanka to karta głębokiej intuicji i dostępu do ukrytej wiedzy. Siedzi między dwiema kolumnami — czarną (B — Boaz, ciemność) i białą (J — Jakin, światło), symbolizując równowagę między przeciwnościami. Za nią wisi zasłona z granatami, oddzielająca świat widzialny od niewidzialnego. Trzyma pergamin Tory — symbolizując ukrytą wiedzę, która ujawnia się tylko wtajemniczonym. Karta wskazuje na czas słuchania wewnętrznego głosu zamiast działania. Coś ważnego pozostaje ukryte — dopiero cisza i cierpliwość przyniosą objawienie.", spiritual: "Kapłanka to Anima, żeńska zasada kosmiczna, Sofía — boska Mądrość. Jest strażniczką progu między świadomością a nieświadomością zbiorową. Półksiężyc u jej stóp symbolizuje panowanie nad cyklem czasu. Karta uczy, że istnieje wiedza, której nie da się zdobyć intelektem — tylko przez ciszę, medytację i zaufanie nadchodzącej całości. To czas introspekcji, snów i synchroniczności.", advice: "Zatrzymaj się i wsłuchaj w swój wewnętrzny głos. Odpowiedź, której szukasz, jest już w Tobie. Medytuj, prowadź dziennik snów, ufaj przeczuciom.", warning: "Nie izoluj się nadmiernie od świata i innych ludzi. Kapłanka może wskazywać na tendencję do nadmiernej tajemniczości lub unikania koniecznych decyzji pod pozorem 'czekania na znak'." },
@@ -650,17 +690,17 @@ let savedVersion = parseInt(localStorage.getItem('tarot_spreads_version')) || 0;
 let spreads;
 
 if (savedVersion < SPREADS_VERSION) {
-    let oldSpreads = JSON.parse(localStorage.getItem('tarot_spreads')) || [];
+    let oldSpreads = loadLS('tarot_spreads', null, 'array') || [];
     let customSpreads = oldSpreads.filter(s => s.id > 1000);
     spreads = [...defaultSpreads, ...customSpreads];
     localStorage.setItem('tarot_spreads', JSON.stringify(spreads));
     localStorage.setItem('tarot_spreads_version', SPREADS_VERSION);
 } else {
-    spreads = JSON.parse(localStorage.getItem('tarot_spreads')) || defaultSpreads;
+    spreads = loadLS('tarot_spreads', null, 'array') || defaultSpreads;
 }
 
-let history = JSON.parse(localStorage.getItem('tarot_history')) || [];
-let settings = JSON.parse(localStorage.getItem('tarot_settings')) || { password: 'tarot2024', geminiApiKey: '', openRouterApiKey: '' };
+let history = loadLS('tarot_history', null, 'array') || [];
+let settings = loadLS('tarot_settings', null, 'object') || { password: 'tarot2024', geminiApiKey: '', openRouterApiKey: '' };
 if (!('openRouterApiKey' in settings)) { settings.openRouterApiKey = ''; }
 let currentSpread = null, drawnCards = [], revealedCards = [];
 let userQuestion = '';
@@ -730,7 +770,7 @@ function renderCards(filter) {
     if (filter === 'major') filtered = cards.filter(c => !c.suit);
     else if (filter !== 'all') filtered = cards.filter(c => c.suit === filter);
     document.getElementById('cards-grid').innerHTML = filtered.map(c =>
-        `<div class="card-item" onclick="openModal(${c.id})"><img src="${c.image}" alt="${c.name}" loading="lazy"><div class="name">${c.name}</div></div>`
+        `<div class="card-item" onclick="openModal(${c.id})"><img src="${esc(c.image)}" alt="${esc(c.name)}" loading="lazy"><div class="name">${esc(c.name)}</div></div>`
     ).join('');
 }
 
@@ -742,12 +782,12 @@ function openModal(id) {
     document.getElementById('modal-suit').textContent = card.nameEn + (card.suit ? ' • ' + card.suit : ' • Wielki Arkan');
     
     document.getElementById('modal-body').innerHTML = `
-        <img src="${card.image}" alt="${card.name}" class="big-card" loading="lazy">
-        <div class="keywords">${card.keywords.map(k => `<span class="keyword">${k}</span>`).join('')}</div>
-        <div class="desc">${card.description}</div>
-        ${card.spiritual ? `<div class="spiritual">🌙 <strong>Aspekt duchowy:</strong> ${card.spiritual}</div>` : ''}
-        <div class="advice">✅ <strong>Rada:</strong> ${card.advice}</div>
-        <div class="warning">⚠️ <strong>Przestroga:</strong> ${card.warning}</div>
+        <img src="${esc(card.image)}" alt="${esc(card.name)}" class="big-card" loading="lazy">
+        <div class="keywords">${card.keywords.map(k => `<span class="keyword">${esc(k)}</span>`).join('')}</div>
+        <div class="desc">${esc(card.description)}</div>
+        ${card.spiritual ? `<div class="spiritual">🌙 <strong>Aspekt duchowy:</strong> ${esc(card.spiritual)}</div>` : ''}
+        <div class="advice">✅ <strong>Rada:</strong> ${esc(card.advice)}</div>
+        <div class="warning">⚠️ <strong>Przestroga:</strong> ${esc(card.warning)}</div>
     `;
     document.getElementById('card-modal').classList.remove('hidden');
 }
@@ -765,13 +805,13 @@ function drawDaily() {
     result.classList.remove('hidden');
     result.innerHTML = `
         <div style="margin-top:1.5rem;">
-            <img src="${card.image}" alt="${card.name}" class="big-card" onclick="openModal(${card.id})" style="max-width:180px;">
-            <h3 style="color:#d4af37;font-family:Cinzel;margin:1rem 0 0.5rem;">${card.name}</h3>
-            <p style="color:#a89984;font-size:0.9rem;">${card.nameEn}${card.suit ? ' • ' + card.suit : ' • Wielki Arkan'}</p>
-            <div class="keywords" style="justify-content:center;margin:0.8rem 0;">${card.keywords.map(k => `<span class="keyword">${k}</span>`).join('')}</div>
+            <img src="${esc(card.image)}" alt="${esc(card.name)}" class="big-card" onclick="openModal(${card.id})" style="max-width:180px;">
+            <h3 style="color:#d4af37;font-family:Cinzel;margin:1rem 0 0.5rem;">${esc(card.name)}</h3>
+            <p style="color:#a89984;font-size:0.9rem;">${esc(card.nameEn)}${card.suit ? ' • ' + esc(card.suit) : ' • Wielki Arkan'}</p>
+            <div class="keywords" style="justify-content:center;margin:0.8rem 0;">${card.keywords.map(k => `<span class="keyword">${esc(k)}</span>`).join('')}</div>
             <div style="max-width:500px;margin:0 auto;text-align:left;">
-                <div class="advice" style="margin-bottom:0.8rem;">✅ <strong>Rada na dziś:</strong> ${card.advice}</div>
-                <div class="warning">⚠️ <strong>Uwaga:</strong> ${card.warning}</div>
+                <div class="advice" style="margin-bottom:0.8rem;">✅ <strong>Rada na dziś:</strong> ${esc(card.advice)}</div>
+                <div class="warning">⚠️ <strong>Uwaga:</strong> ${esc(card.warning)}</div>
             </div>
             <div style="margin-top:1.5rem;display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap;">
                 <button class="filter-btn" onclick="openModal(${card.id})">Pełny opis karty →</button>
@@ -794,7 +834,7 @@ function resetDaily() {
 // === UKŁADY ===
 function renderSpreads() {
     document.getElementById('spreads-list').innerHTML = `<div class="spread-list">${spreads.map(s =>
-        `<div class="spread-item" onclick="startSpread(${s.id})"><h3>${s.name}</h3><p>${s.desc}</p><p style="color:#d4af37;font-size:0.85rem;margin-top:0.5rem;">🃏 ${s.count} ${s.count === 1 ? 'karta' : s.count < 5 ? 'karty' : 'kart'}</p></div>`
+        `<div class="spread-item" onclick="startSpread(${s.id})"><h3>${esc(s.name)}</h3><p>${esc(s.desc)}</p><p style="color:#d4af37;font-size:0.85rem;margin-top:0.5rem;">🃏 ${s.count} ${s.count === 1 ? 'karta' : s.count < 5 ? 'karty' : 'kart'}</p></div>`
     ).join('')}</div>`;
 }
 
@@ -815,7 +855,7 @@ function startSpread(id) {
     active.classList.remove('hidden');
     
     if (currentSpread.noQuestion) {
-        active.innerHTML = '<div style="text-align:center;"><button class="filter-btn" onclick="showSpreads()">← Wróć</button><h3 style="color:#d4af37;font-size:1.3rem;margin-top:1rem;font-family:Cinzel;">' + currentSpread.name + '</h3><p style="color:#a89984;">' + currentSpread.desc + '</p><div style="margin-top:2rem;max-width:500px;margin-left:auto;margin-right:auto;"><div style="padding:1rem;background:rgba(156,39,176,0.1);border:1px solid rgba(156,39,176,0.3);border-radius:8px;margin-bottom:1.5rem;"><p style="color:#d4c4a8;margin:0;">✨ Ten układ nie wymaga konkretnego pytania.</p><p style="color:#a89984;font-size:0.9rem;margin:0.5rem 0 0;">Opowie o ogólnej sytuacji życiowej, otwartych i ukrytych aspektach Twojej osobowości.</p></div><button class="draw-btn" onclick="drawSpread()">Wyciągnij karty</button></div></div>';
+        active.innerHTML = '<div style="text-align:center;"><button class="filter-btn" onclick="showSpreads()">← Wróć</button><h3 style="color:#d4af37;font-size:1.3rem;margin-top:1rem;font-family:Cinzel;">' + esc(currentSpread.name) + '</h3><p style="color:#a89984;">' + esc(currentSpread.desc) + '</p><div style="margin-top:2rem;max-width:500px;margin-left:auto;margin-right:auto;"><div style="padding:1rem;background:rgba(156,39,176,0.1);border:1px solid rgba(156,39,176,0.3);border-radius:8px;margin-bottom:1.5rem;"><p style="color:#d4c4a8;margin:0;">✨ Ten układ nie wymaga konkretnego pytania.</p><p style="color:#a89984;font-size:0.9rem;margin:0.5rem 0 0;">Opowie o ogólnej sytuacji życiowej, otwartych i ukrytych aspektach Twojej osobowości.</p></div><button class="draw-btn" onclick="drawSpread()">Wyciągnij karty</button></div></div>';
         return;
     }
     
@@ -824,13 +864,18 @@ function startSpread(id) {
         placeholderText = 'Np.: Co będzie, jeśli zmienię pracę, i jak będzie, jeśli zostanę? Co przyniesie podjęcie działania, a co czeka mnie, jeśli poczekam?';
     }
     
-    active.innerHTML = '<div style="text-align:center;"><button class="filter-btn" onclick="showSpreads()">← Wróć</button><h3 style="color:#d4af37;font-size:1.3rem;margin-top:1rem;font-family:Cinzel;">' + currentSpread.name + '</h3><p style="color:#a89984;">' + currentSpread.desc + '</p><div style="margin-top:2rem;max-width:500px;margin-left:auto;margin-right:auto;"><p style="margin-bottom:0.5rem;color:#d4c4a8;">Sformułuj swoje pytanie lub opisz sytuację:</p><textarea class="question-input" id="spread-question" placeholder="' + placeholderText + '"></textarea><p style="margin-bottom:1rem;color:#a89984;font-size:0.9rem;font-style:italic;">Pytanie zostanie użyte do spersonalizowanej interpretacji</p><button class="draw-btn" onclick="drawSpread()">Wyciągnij karty</button></div></div>';
+    active.innerHTML = '<div style="text-align:center;"><button class="filter-btn" onclick="showSpreads()">← Wróć</button><h3 style="color:#d4af37;font-size:1.3rem;margin-top:1rem;font-family:Cinzel;">' + esc(currentSpread.name) + '</h3><p style="color:#a89984;">' + esc(currentSpread.desc) + '</p><div style="margin-top:2rem;max-width:500px;margin-left:auto;margin-right:auto;"><p style="margin-bottom:0.5rem;color:#d4c4a8;">Sformułuj swoje pytanie lub opisz sytuację:</p><textarea class="question-input" id="spread-question" placeholder="' + placeholderText + '"></textarea><p style="margin-bottom:1rem;color:#a89984;font-size:0.9rem;font-style:italic;">Pytanie zostanie użyte do spersonalizowanej interpretacji</p><button class="draw-btn" onclick="drawSpread()">Wyciągnij karty</button></div></div>';
 }
 
 function drawSpread() {
     const questionInput = document.getElementById('spread-question');
-    if (questionInput) userQuestion = questionInput.value.trim();
-    const shuffled = [...cards].sort(() => Math.random() - 0.5);
+    if (questionInput) userQuestion = questionInput.value.trim().slice(0, 500);
+    // Tasowanie Fisher-Yates — rownomierny rozklad (sort(()=>Math.random()-0.5) jest skrzywiony)
+    const shuffled = [...cards];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
     drawnCards = shuffled.slice(0, currentSpread.count);
     revealedCards = new Array(currentSpread.count).fill(false);
     renderSpreadCards();
@@ -840,9 +885,9 @@ function renderSpreadCards() {
     const active = document.getElementById('spread-active');
     let html = drawnCards.map((card, i) => {
         if (revealedCards[i]) {
-            return '<div class="spread-card"><img src="' + card.image + '" alt="' + card.name + '" onclick="openModal(' + card.id + ')"><p style="margin:0.3rem 0 0;font-size:0.8rem;">' + card.name + '</p><p class="spread-label">' + currentSpread.positions[i] + '</p></div>';
+            return '<div class="spread-card"><img src="' + esc(card.image) + '" alt="' + esc(card.name) + '" onclick="openModal(' + card.id + ')"><p style="margin:0.3rem 0 0;font-size:0.8rem;">' + esc(card.name) + '</p><p class="spread-label">' + esc(currentSpread.positions[i]) + '</p></div>';
         } else {
-            return '<div class="spread-card"><div class="card-back" onclick="revealSpreadCard(' + i + ')"><span>' + (i+1) + '</span></div><p class="spread-label">' + currentSpread.positions[i] + '</p></div>';
+            return '<div class="spread-card"><div class="card-back" onclick="revealSpreadCard(' + i + ')"><span>' + (i+1) + '</span></div><p class="spread-label">' + esc(currentSpread.positions[i]) + '</p></div>';
         }
     }).join('');
     
@@ -854,7 +899,7 @@ function renderSpreadCards() {
     
     let questionHtml = '';
     if (userQuestion) {
-        questionHtml = '<div style="margin-top:1rem;padding:0.8rem;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);border-radius:8px;max-width:500px;margin-left:auto;margin-right:auto;"><p style="color:#a89984;font-size:0.85rem;margin:0;">Twoje pytanie:</p><p style="color:#e8d5b7;margin:0.3rem 0 0;font-style:italic;">"' + userQuestion + '"</p></div>';
+        questionHtml = '<div style="margin-top:1rem;padding:0.8rem;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);border-radius:8px;max-width:500px;margin-left:auto;margin-right:auto;"><p style="color:#a89984;font-size:0.85rem;margin:0;">Twoje pytanie:</p><p style="color:#e8d5b7;margin:0.3rem 0 0;font-style:italic;">"' + esc(userQuestion) + '"</p></div>';
     }
     
     let interpretBtn = '';
@@ -862,7 +907,7 @@ function renderSpreadCards() {
         interpretBtn = '<button class="btn-interpret" onclick="getGeminiInterpretation()">🔮 Interpretacja AI</button>';
     }
     
-    active.innerHTML = '<div style="text-align:center;"><button class="filter-btn" onclick="showSpreads()">← Wróć</button><h3 style="color:#d4af37;font-size:1.3rem;margin-top:1rem;font-family:Cinzel;">' + currentSpread.name + '</h3>' + questionHtml + '<div class="' + containerClass + '">' + html + '</div><div style="margin-top:1.5rem;">' + interpretBtn + '<button class="draw-btn" style="margin-left:0.5rem;" onclick="drawSpread()">Nowy układ</button></div></div>';
+    active.innerHTML = '<div style="text-align:center;"><button class="filter-btn" onclick="showSpreads()">← Wróć</button><h3 style="color:#d4af37;font-size:1.3rem;margin-top:1rem;font-family:Cinzel;">' + esc(currentSpread.name) + '</h3>' + questionHtml + '<div class="' + containerClass + '">' + html + '</div><div style="margin-top:1.5rem;">' + interpretBtn + '<button class="draw-btn" style="margin-left:0.5rem;" onclick="drawSpread()">Nowy układ</button></div></div>';
 }
 
 function revealSpreadCard(i) {
@@ -894,12 +939,12 @@ function showHistory() {
     
     histList.innerHTML = '<div style="text-align:right;margin-bottom:1rem;"><button class="btn-del" onclick="clearHistory()">🗑️ Wyczyść wszystko</button></div>' + 
         history.map(item => {
-            const questionHtml = item.question ? '<p style="color:#a89984;font-size:0.85rem;margin:0.5rem 0;font-style:italic;">❓ "' + item.question + '"</p>' : '';
+            const questionHtml = item.question ? '<p style="color:#a89984;font-size:0.85rem;margin:0.5rem 0;font-style:italic;">❓ "' + esc(item.question) + '"</p>' : '';
             const interpretBtn = '<button class="btn-interpret-small" onclick="reinterpretFromHistory(' + item.id + ')">🔮 Interpretacja</button>';
             return '<div class="history-item">' +
-                '<div class="history-header"><div><h4>' + item.spreadName + '</h4><span class="history-date">' + new Date(item.date).toLocaleString('pl-PL') + '</span></div><button class="btn-del" onclick="deleteHistItem(' + item.id + ')">🗑️</button></div>' +
+                '<div class="history-header"><div><h4>' + esc(item.spreadName) + '</h4><span class="history-date">' + new Date(item.date).toLocaleString('pl-PL') + '</span></div><button class="btn-del" onclick="deleteHistItem(' + item.id + ')">🗑️</button></div>' +
                 questionHtml +
-                '<div class="history-cards">' + item.cards.map((c, i) => '<div class="history-mini" title="' + item.positions[i] + ': ' + c.name + '" onclick="openModal(' + c.id + ')"><img src="' + c.image + '" alt="' + c.name + '"></div>').join('') + '</div>' +
+                '<div class="history-cards">' + item.cards.map((c, i) => '<div class="history-mini" title="' + esc((item.positions[i] || '') + ': ' + c.name) + '" onclick="openModal(' + c.id + ')"><img src="' + esc(c.image) + '" alt="' + esc(c.name) + '"></div>').join('') + '</div>' +
                 '<div style="margin-top:0.5rem;">' + interpretBtn + '</div></div>';
         }).join('');
 }
@@ -908,7 +953,7 @@ function reinterpretFromHistory(historyId) {
     const item = history.find(h => h.id === historyId);
     if (!item) return;
     currentSpread = spreads.find(s => s.name === item.spreadName) || { name: item.spreadName, positions: item.positions, methodology: '', layout: 'line' };
-    userQuestion = item.question || '';
+    userQuestion = (item.question || '').slice(0, 500);
     drawnCards = item.cards.map(c => cards.find(card => card.id === c.id)).filter(c => c);
     revealedCards = new Array(drawnCards.length).fill(true);
     getGeminiInterpretation();
@@ -940,11 +985,11 @@ function renderAnalysisPage() {
                 <div class="analysis-check" id="analysis-check-${item.id}">☐</div>
                 <div style="flex:1;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.3rem;">
-                        <strong style="color:#d4af37;font-family:'Cinzel',serif;">${item.spreadName}</strong>
+                        <strong style="color:#d4af37;font-family:'Cinzel',serif;">${esc(item.spreadName)}</strong>
                         <span style="color:#a89984;font-size:0.8rem;">${date}</span>
                     </div>
-                    ${item.question ? `<p style="color:#e8d5b7;font-style:italic;margin:0.3rem 0;font-size:0.9rem;">"${item.question}"</p>` : '<p style="color:#a89984;font-size:0.85rem;margin:0.3rem 0;">Bez pytania</p>'}
-                    <div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-top:0.4rem;">${item.cards.map(c => `<div class="history-mini"><img src="${c.image}" alt="${c.name}" title="${c.name}"></div>`).join('')}</div>
+                    ${item.question ? `<p style="color:#e8d5b7;font-style:italic;margin:0.3rem 0;font-size:0.9rem;">"${esc(item.question)}"</p>` : '<p style="color:#a89984;font-size:0.85rem;margin:0.3rem 0;">Bez pytania</p>'}
+                    <div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-top:0.4rem;">${item.cards.map(c => `<div class="history-mini"><img src="${esc(c.image)}" alt="${esc(c.name)}" title="${esc(c.name)}"></div>`).join('')}</div>
                 </div>
             </div>
         </div>`;
@@ -991,7 +1036,7 @@ async function runComplexAnalysis() {
     modal.classList.remove('hidden');
     content.innerHTML = '<div class="interpretation-loading"><div class="spinner"></div><p style="color:#d4af37;">📊 Przygotowuję kompleksową analizę...</p><p style="color:#a89984;font-size:0.9rem;">Analizuję powiązania między układami</p></div>';
 
-    const generalQuestion = document.getElementById('analysis-question')?.value?.trim() || '';
+    const generalQuestion = (document.getElementById('analysis-question')?.value?.trim() || '').slice(0, 500);
     const selectedItems = selectedAnalysisIds.map(id => history.find(h => h.id === id)).filter(Boolean);
 
     // Budujemy dane per układ
@@ -1053,12 +1098,12 @@ ${fortune.length > 0 ? `🌟 KARTY POWODZENIA: ${fortune.join(', ')}` : ''}
         repeatingInfo = `\n⚡ KARTY POWTARZAJĄCE SIĘ W KILKU UKŁADACH: ${repeatingCards.join(', ')}\nTo niezwykle istotny sygnał — karty pojawiające się w różnych układach niosą kluczowe przesłanie!\n`;
     }
 
-    const prompt = `Jesteś doświadczonym konsultantem tarotowym i mistykiem, biegłym w symbolice Tarota tradycji Waite-Smitha i metodologii Hajo Banzhafa. Przeprowadź KOMPLEKSOWĄ ANALIZĘ kilku układów wykonanych przez tego samego pytającego. Po polsku.
+    const prompt = `Jesteś konsultantem tarota z podejściem praktycznego psychologa, biegłym w symbolice Tarota tradycji Waite-Smitha i metodologii Hajo Banzhafa. Czytasz karty jako lustro stanu psychicznego i sytuacji pytającego — łączysz symbolikę z rozumieniem jego motywów, emocji i zachowań. Przeprowadź KOMPLEKSOWĄ ANALIZĘ kilku układów wykonanych przez tego samego pytającego. Po polsku. Wyjaśniaj nie tylko "co będzie", ale co układy mówią o wewnętrznym stanie i jak z tym pracować.
 
 ${generalQuestion ? `PYTANIE OGÓLNE KLIENTA: "${generalQuestion}"` : 'Klient prosi o kompleksową analizę wybranych układów.'}
 
 UWAGA: Pytający wykonał ${selectedItems.length} układy. Każdy układ mógł być na inne pytanie, ale wszystkie dotyczą tego samego okresu życiowego tej samej osoby. Twoim zadaniem jest:
-1. Najpierw KRÓTKO przeanalizować każdy układ osobno (kluczowe wnioski, 300-500 słów per układ)
+1. Najpierw KRÓTKO przeanalizować każdy układ osobno (kluczowe wnioski, 150-250 słów per układ)
 2. Następnie POŁĄCZYĆ wszystkie układy w jedną spójną całość
 
 ${spreadsData}
@@ -1071,9 +1116,11 @@ KRYTYCZNIE WAŻNE — PRACA Z OPISAMI KART:
 
 ANIOŁY STRÓŻE (Kapłanka, Kapłan, Gwiazda):
 • Ich obecność podnosi pozytywny nastrój układu — dobre karty silniejsze, złe łagodniejsze
+• OBOWIĄZKOWO zaznacz obecność Anioła Stróża i jego łagodzący, podnoszący wpływ
 
 KARTY POWODZENIA (Słońce, Świat):
 • Gwarantują pomyślny wynik — negatywne karty wskazują tylko na przeszkody do pokonania
+• OBOWIĄZKOWO odzwierciedl we wnioskach, że Słońce lub Świat istotnie wzmacnia korzystne rozwiązanie, niemal niezależnie od przeszkód
 
 === STRUKTURA KOMPLEKSOWEJ INTERPRETACJI ===
 
@@ -1081,7 +1128,7 @@ CZĘŚĆ 1 — ANALIZA KAŻDEGO UKŁADU OSOBNO:
 Dla każdego układu podaj:
 - Ogólny nastrój i dominujące energie
 - Kluczowe karty i ich przesłanie w kontekście pytania
-- Główny wniosek (300-500 słów per układ)
+- Główny wniosek (150-250 słów per układ)
 - WAŻNE: interpretuj zgodnie z metodologią danego układu (podaną wyżej)
 
 CZĘŚĆ 2 — ANALIZA KRZYŻOWA (najważniejsza!):
@@ -1100,9 +1147,11 @@ CZĘŚĆ 3 — SYNTEZA I REKOMENDACJE:
 
 STYL:
 - Pisz w drugiej osobie ("Ty", "Ci", "Twój")
-- Mistyczny, ale dostępny język
+- Ton ciepły i wdumliwy, ale przyziemny — MIĘDZY mistyką a suchym pragmatyzmem. Mniej ezoterycznego patosu, więcej konkretu i praktycznych orientirów
+- Wiąż symbolikę ze stanem wewnętrznym i zachowaniami pytającego — pokazuj, jak z tym pracować
+- Pisz ZWIĘŹLE: lepiej mniej zdań, ale każde treściwe. Nie ucinaj sztucznie myśli
 - ZABRONIONE: tabele markdown (|---|---|). Tylko tekst z akapitami
-- Objętość: 3000-5000 słów`;
+- Objętość: 1200-2000 słów`;
 
     const maxOutputTokens = 16384;
 
@@ -1142,13 +1191,14 @@ STYL:
         let streamError = null;
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
+        let buffer = '';
 
         try {
             while (true) {
                 const { done, value } = await reader.read();
                 if (done) break;
-                const chunk = decoder.decode(value, { stream: true });
-                const lines = chunk.split('\n');
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n'); buffer = lines.pop();
                 for (const line of lines) {
                     if (line.startsWith('data: ')) {
                         try {
@@ -1156,7 +1206,7 @@ STYL:
                             const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
                             if (text) {
                                 fullText += text;
-                                streamingText.innerHTML = fullText.replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4af37;">$1</strong>').replace(/\*(.+?)\*/g, '<em>$1</em>').replace(/### (.+)/g, '<h3 style="color:#d4af37;font-family:Cinzel,serif;margin:1.5rem 0 0.8rem;font-size:1.15rem;">$1</h3>').replace(/## (.+)/g, '<h3 style="color:#d4af37;font-family:Cinzel,serif;margin:1.5rem 0 0.8rem;font-size:1.2rem;">$1</h3>').replace(/# (.+)/g, '<h3 style="color:#d4af37;font-family:Cinzel,serif;margin:1.5rem 0 0.8rem;font-size:1.3rem;">$1</h3>').replace(/\n/g, '<br>');
+                                streamingText.innerHTML = formatAiHtml(fullText);
                                 content.scrollTop = content.scrollHeight;
                             }
                         } catch(e) {}
@@ -1208,12 +1258,12 @@ function showAdminTab(tab) {
 }
 
 function renderAdminCards() {
-    document.getElementById('admin-cards').innerHTML = '<table class="admin-table"><thead><tr><th>Obr.</th><th>Nazwa</th><th>Kolor</th><th>Akcje</th></tr></thead><tbody>' + cards.map(c => '<tr><td><img src="' + c.image + '" alt="" loading="lazy"></td><td><strong>' + c.name + '</strong><br><small style="color:#a89984;">' + c.nameEn + '</small></td><td>' + (c.suit || 'Wielkie') + '</td><td class="actions"><button class="btn-secondary" onclick="editCard(' + c.id + ')">✏️</button></td></tr>').join('') + '</tbody></table>';
+    document.getElementById('admin-cards').innerHTML = '<table class="admin-table"><thead><tr><th>Obr.</th><th>Nazwa</th><th>Kolor</th><th>Akcje</th></tr></thead><tbody>' + cards.map(c => '<tr><td><img src="' + esc(c.image) + '" alt="" loading="lazy"></td><td><strong>' + esc(c.name) + '</strong><br><small style="color:#a89984;">' + esc(c.nameEn) + '</small></td><td>' + esc(c.suit || 'Wielkie') + '</td><td class="actions"><button class="btn-secondary" onclick="editCard(' + c.id + ')">✏️</button></td></tr>').join('') + '</tbody></table>';
 }
 
 function renderAdminSpreads() {
     const layoutNames = { line: 'Linia', cross4: 'Krzyż', celtic: 'Krzyż Celtycki', choice: 'Wybór', gypsy: 'Cygański' };
-    document.getElementById('admin-spreads').innerHTML = '<button class="btn-primary" style="width:auto;margin-bottom:1rem;" onclick="addSpread()">+ Dodaj układ</button><table class="admin-table"><thead><tr><th>Nazwa</th><th>Opis</th><th>Kart</th><th>Typ</th><th>Akcje</th></tr></thead><tbody>' + spreads.map(s => '<tr><td><strong>' + s.name + '</strong></td><td>' + s.desc + '</td><td>' + s.count + '</td><td>' + (layoutNames[s.layout] || 'Linia') + '</td><td class="actions"><button class="btn-secondary" onclick="editSpread(' + s.id + ')">✏️</button><button class="btn-danger" onclick="deleteSpread(' + s.id + ')">🗑️</button></td></tr>').join('') + '</tbody></table>';
+    document.getElementById('admin-spreads').innerHTML = '<button class="btn-primary" style="width:auto;margin-bottom:1rem;" onclick="addSpread()">+ Dodaj układ</button><table class="admin-table"><thead><tr><th>Nazwa</th><th>Opis</th><th>Kart</th><th>Typ</th><th>Akcje</th></tr></thead><tbody>' + spreads.map(s => '<tr><td><strong>' + esc(s.name) + '</strong></td><td>' + esc(s.desc) + '</td><td>' + s.count + '</td><td>' + (layoutNames[s.layout] || 'Linia') + '</td><td class="actions"><button class="btn-secondary" onclick="editSpread(' + s.id + ')">✏️</button><button class="btn-danger" onclick="deleteSpread(' + s.id + ')">🗑️</button></td></tr>').join('') + '</tbody></table>';
 }
 
 function renderAdminSettings() {
@@ -1297,7 +1347,7 @@ async function callOpenRouterStream(prompt, maxTokens, streamingEl, cursorEl, co
     const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + settings.openRouterApiKey, 'HTTP-Referer': window.location.href, 'X-Title': 'Tarot PL' },
-        body: JSON.stringify({ model: 'google/gemini-3.1-flash-lite-preview', max_tokens: maxTokens, stream: true, messages: [{ role: 'user', content: prompt }] })
+        body: JSON.stringify({ model: 'google/gemini-3.6-flash', max_tokens: maxTokens, stream: true, messages: [{ role: 'user', content: prompt }] })
     });
     if (!response.ok) {
         const err = await response.json().catch(() => ({}));
@@ -1330,8 +1380,7 @@ async function callOpenRouterStream(prompt, maxTokens, streamingEl, cursorEl, co
                         const text = data.choices?.[0]?.delta?.content;
                         if (text) {
                             fullText += text;
-                            const fmt = fullText.replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4af37;">$1</strong>').replace(/###\s*(.+)/g, '<h4 style="color:#d4af37;margin:1.2rem 0 0.5rem;">$1</h4>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>');
-                            streamingEl.innerHTML = '<p>' + fmt + '</p>';
+                            streamingEl.innerHTML = formatAiHtml(fullText);
                         }
                     } catch(e) {}
                 }
@@ -1443,8 +1492,8 @@ Jedno krótkie zdanie-przestroga. Bez straszenia.`;
         
         content.innerHTML = `
             <div style="background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);border-radius:8px;padding:1rem;margin-bottom:1.5rem;text-align:center;">
-                <h3 style="color:#d4af37;margin:0;font-family:Cinzel;">${card.name}</h3>
-                <p style="color:#a89984;font-size:0.9rem;margin:0.5rem 0 0;">${card.nameEn}</p>
+                <h3 style="color:#d4af37;margin:0;font-family:Cinzel;">${esc(card.name)}</h3>
+                <p style="color:#a89984;font-size:0.9rem;margin:0.5rem 0 0;">${esc(card.nameEn)}</p>
             </div>
             <div id="streaming-text" style="line-height:1.8;"></div>
             <span id="streaming-cursor" style="display:inline-block;width:3px;height:1.2em;background:linear-gradient(180deg,#d4af37,#f4d03f);animation:blink 0.7s infinite;margin-left:3px;vertical-align:middle;box-shadow:0 0 8px #d4af37;"></span>
@@ -1469,7 +1518,7 @@ Jedno krótkie zdanie-przestroga. Bez straszenia.`;
                             const data = JSON.parse(line.slice(6));
                             if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
                                 fullText += data.candidates[0].content.parts[0].text;
-                                streamingText.innerHTML = '<p>' + fullText.replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4af37;">$1</strong>').replace(/###\s*(.+)/g, '<h4 style="color:#d4af37;margin:1.2rem 0 0.5rem;">$1</h4>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
+                                streamingText.innerHTML = formatAiHtml(fullText);
                             }
                         } catch(e) {}
                     }
@@ -1544,15 +1593,13 @@ async function getGeminiInterpretation(retryCount = 0) {
     // Anioły Stróże — Kapłanka (id:2), Kapłan (id:5), Gwiazda (id:17)
     const guardianAngels = drawnCards.filter(c => [2, 5, 17].includes(c.id));
     if (guardianAngels.length > 0) {
-        moodAnalysis += `\n✨ ANIOŁY STRÓŻE W UKŁADZIE: ${guardianAngels.map(c => c.name).join(', ')}\n`;
-        moodAnalysis += `Obecność ${guardianAngels.length > 1 ? 'Aniołów Stróżów podnosi' : 'Anioła Stróża podnosi'} pozytywny nastrój całego układu. Dobre karty działają jeszcze silniej, a negatywne karty tracą swoją ostrość — nie tworzą wielkich problemów, a jedynie chwilowe nieprzyjemności lub łagodne ostrzeżenia.\n`;
+        moodAnalysis += `\n✨ ANIOŁY STRÓŻE W UKŁADZIE: ${guardianAngels.map(c => c.name).join(', ')} (zastosuj regułę Aniołów Stróżów — patrz zasady uniwersalne)\n`;
     }
 
     // Karty Powodzenia — Słońce (id:19), Świat (id:21)
     const fortuneCards = drawnCards.filter(c => [19, 21].includes(c.id));
     if (fortuneCards.length > 0) {
-        moodAnalysis += `\n🌟 KARTY POWODZENIA W UKŁADZIE: ${fortuneCards.map(c => c.name).join(', ')}\n`;
-        moodAnalysis += `Obecność ${fortuneCards.length > 1 ? 'Kart Powodzenia gwarantuje' : 'Karty Powodzenia gwarantuje'} pomyślny wynik w każdej sprawie. Nawet najbardziej negatywne karty w układzie nie są w stanie zablokować sukcesu — mogą jedynie wskazywać na przeszkody, które zostaną pokonane.\n`;
+        moodAnalysis += `\n🌟 KARTY POWODZENIA W UKŁADZIE: ${fortuneCards.map(c => c.name).join(', ')} (zastosuj regułę Kart Powodzenia — patrz zasady uniwersalne)\n`;
     }
 
     function getCardValue(card) {
@@ -1628,7 +1675,7 @@ STRUKTURA INTERPRETACJI:
         specialInstructions = `\nWAŻNE! TO UKŁAD "CYGAŃSKI" — OGÓLNY OBRAZ ŻYCIA BEZ KONKRETNEGO PYTANIA:\n1. WIERZCHOŁEK (karta 1 "Obecna sytuacja") — punkt wyjścia.\n2. LEWA KOLUMNA (karty 2, 4, 6) — "otwarta polityka": co pokazuje światu.\n3. PRAWA KOLUMNA (karty 3, 5, 7) — "ukryte motywy": prawdziwa istota.\n4. Kluczowe porównania: Karta 2 vs 3 (maska vs twarz), Karta 4 vs 5 (marzenia vs rzeczywistość).\n5. Jeśli kolumny kontrastują — człowiek jest nieszczery wobec siebie lub innych.`;
     }
     
-    const prompt = `Jesteś doświadczonym konsultantem tarotowym i mistykiem, biegłym w symbolice Tarota tradycji Waite-Smitha i metodologii Hajo Banzhafa. Daj szczegółową i spersonalizowaną interpretację tego układu po polsku, rozwijając podane opisy kart swoją profesjonalną wiedzą.
+    const prompt = `Jesteś konsultantem tarota z podejściem praktycznego psychologa, biegłym w symbolice Tarota tradycji Waite-Smitha i metodologii Hajo Banzhafa. Czytasz karty jako lustro stanu psychicznego i sytuacji pytającego — łączysz symbolikę kart z rozumieniem jego motywów, emocji i zachowań. Daj spersonalizowaną interpretację tego układu po polsku, rozwijając podane opisy kart swoją wiedzą. Wyjaśniaj nie tylko "co będzie", ale przede wszystkim co układ mówi o wewnętrznym stanie pytającego i jak może z tym pracować.
 
 ${userQuestion ? `PYTANIE KLIENTA: "${userQuestion}"` : 'Klient nie sformułował konkretnego pytania — daj ogólną interpretację.'}
 
@@ -1694,6 +1741,7 @@ ANIOŁY STRÓŻE (Kapłanka, Kapłan, Gwiazda):
 • Kapłanka chroni przez intuicję i wewnętrzną mądrość
 • Kapłan chroni przez tradycję, strukturę i duchowe przewodnictwo
 • Gwiazda chroni przez nadzieję, inspirację i kosmiczną łaskę
+• OBOWIĄZKOWO zaznacz w interpretacji obecność Anioła Stróża i jego łagodzący, podnoszący wpływ na cały układ
 
 KARTY POWODZENIA (Słońce, Świat):
 • Jeśli w układzie jest obecne Słońce (XIX) lub Świat (XXI) — te karty GWARANTUJĄ pomyślny wynik w każdej sprawie.
@@ -1703,6 +1751,7 @@ KARTY POWODZENIA (Słońce, Świat):
   - Ogólny ton interpretacji powinien być optymistyczny i pełen nadziei
 • Słońce (XIX) — radość, sukces, jasność, spełnienie, triumf światła nad ciemnością
 • Świat (XXI) — pełnia, ukończenie cyklu, osiągnięcie celu, harmonia i nagroda
+• OBOWIĄZKOWO odzwierciedl we wnioskach, że obecność Słońca lub Świata istotnie wzmacnia korzystne rozwiązanie — niemal niezależnie od przeszkód
 
 INSTRUKCJE DLA GŁĘBOKIEJ INTERPRETACJI:
 
@@ -1739,11 +1788,13 @@ INSTRUKCJE DLA GŁĘBOKIEJ INTERPRETACJI:
 
 STYL:
 - Pisz w drugiej osobie ("Ty", "Ci", "Twój")
-- Używaj mistycznego, ale dostępnego języka
+- Ton ciepły i wdumliwy, ale przyziemny — MIĘDZY mistyką a suchym pragmatyzmem. Mniej ezoterycznego patosu, więcej konkretu i praktycznych orientirów
+- Wiąż symbolikę kart ze stanem wewnętrznym, emocjami i zachowaniami pytającego — i pokazuj, jak z tym praktycznie pracować
 - Bądź konkretny, unikaj ogólnikowych fraz
+- Pisz ZWIĘŹLE: lepiej mniej zdań, ale każde treściwe. Nie ucinaj sztucznie myśli — kończ je, tylko bez rozwlekania
 - ZABRONIONE jest używanie tabel markdown (|---|---|). Pisz zwykłym tekstem z akapitami
 - NIE używaj symboli |, :---, tabel czy schematów. Tylko tekst!
-- Objętość: ${drawnCards.length <= 4 ? '800-1200' : drawnCards.length <= 7 ? '1200-2000' : '2000-3000'} słów.`;
+- Objętość: ${drawnCards.length <= 4 ? '400-600' : drawnCards.length <= 7 ? '600-1000' : '1000-1500'} słów.`;
 
     const maxOutputTokens = drawnCards.length <= 4 ? 4096 : drawnCards.length <= 7 ? 8192 : 16384;
 
@@ -1811,7 +1862,7 @@ STYL:
                             const data = JSON.parse(line.slice(6));
                             if (data.candidates?.[0]?.content?.parts?.[0]?.text) {
                                 fullText += data.candidates[0].content.parts[0].text;
-                                streamingText.innerHTML = '<p>' + fullText.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/###\s*(.+)/g, '<h4 style="color:#d4af37;margin:1.2rem 0 0.5rem;">$1</h4>').replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>') + '</p>';
+                                streamingText.innerHTML = formatAiHtml(fullText);
                                 const modalContent = content.closest('.interpretation-box');
                                 if (modalContent) modalContent.scrollTop = modalContent.scrollHeight;
                             }
