@@ -865,7 +865,7 @@ function startSpread(id) {
 
 function drawSpread() {
     const questionInput = document.getElementById('spread-question');
-    if (questionInput) userQuestion = questionInput.value.trim();
+    if (questionInput) userQuestion = questionInput.value.trim().slice(0, 500);
     // Tasowanie Fisher-Yates — rownomierny rozklad (sort(()=>Math.random()-0.5) jest skrzywiony)
     const shuffled = [...cards];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -949,7 +949,7 @@ function reinterpretFromHistory(historyId) {
     const item = history.find(h => h.id === historyId);
     if (!item) return;
     currentSpread = spreads.find(s => s.name === item.spreadName) || { name: item.spreadName, positions: item.positions, methodology: '', layout: 'line' };
-    userQuestion = item.question || '';
+    userQuestion = (item.question || '').slice(0, 500);
     drawnCards = item.cards.map(c => cards.find(card => card.id === c.id)).filter(c => c);
     revealedCards = new Array(drawnCards.length).fill(true);
     getGeminiInterpretation();
@@ -1032,7 +1032,7 @@ async function runComplexAnalysis() {
     modal.classList.remove('hidden');
     content.innerHTML = '<div class="interpretation-loading"><div class="spinner"></div><p style="color:#d4af37;">📊 Przygotowuję kompleksową analizę...</p><p style="color:#a89984;font-size:0.9rem;">Analizuję powiązania między układami</p></div>';
 
-    const generalQuestion = document.getElementById('analysis-question')?.value?.trim() || '';
+    const generalQuestion = (document.getElementById('analysis-question')?.value?.trim() || '').slice(0, 500);
     const selectedItems = selectedAnalysisIds.map(id => history.find(h => h.id === id)).filter(Boolean);
 
     // Budujemy dane per układ
