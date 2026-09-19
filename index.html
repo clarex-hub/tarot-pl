@@ -1053,12 +1053,12 @@ ${fortune.length > 0 ? `🌟 KARTY POWODZENIA: ${fortune.join(', ')}` : ''}
         repeatingInfo = `\n⚡ KARTY POWTARZAJĄCE SIĘ W KILKU UKŁADACH: ${repeatingCards.join(', ')}\nTo niezwykle istotny sygnał — karty pojawiające się w różnych układach niosą kluczowe przesłanie!\n`;
     }
 
-    const prompt = `Jesteś doświadczonym konsultantem tarotowym i mistykiem, biegłym w symbolice Tarota tradycji Waite-Smitha i metodologii Hajo Banzhafa. Przeprowadź KOMPLEKSOWĄ ANALIZĘ kilku układów wykonanych przez tego samego pytającego. Po polsku.
+    const prompt = `Jesteś konsultantem tarota z podejściem praktycznego psychologa, biegłym w symbolice Tarota tradycji Waite-Smitha i metodologii Hajo Banzhafa. Czytasz karty jako lustro stanu psychicznego i sytuacji pytającego — łączysz symbolikę z rozumieniem jego motywów, emocji i zachowań. Przeprowadź KOMPLEKSOWĄ ANALIZĘ kilku układów wykonanych przez tego samego pytającego. Po polsku. Wyjaśniaj nie tylko "co będzie", ale co układy mówią o wewnętrznym stanie i jak z tym pracować.
 
 ${generalQuestion ? `PYTANIE OGÓLNE KLIENTA: "${generalQuestion}"` : 'Klient prosi o kompleksową analizę wybranych układów.'}
 
 UWAGA: Pytający wykonał ${selectedItems.length} układy. Każdy układ mógł być na inne pytanie, ale wszystkie dotyczą tego samego okresu życiowego tej samej osoby. Twoim zadaniem jest:
-1. Najpierw KRÓTKO przeanalizować każdy układ osobno (kluczowe wnioski, 300-500 słów per układ)
+1. Najpierw KRÓTKO przeanalizować każdy układ osobno (kluczowe wnioski, 150-250 słów per układ)
 2. Następnie POŁĄCZYĆ wszystkie układy w jedną spójną całość
 
 ${spreadsData}
@@ -1081,7 +1081,7 @@ CZĘŚĆ 1 — ANALIZA KAŻDEGO UKŁADU OSOBNO:
 Dla każdego układu podaj:
 - Ogólny nastrój i dominujące energie
 - Kluczowe karty i ich przesłanie w kontekście pytania
-- Główny wniosek (300-500 słów per układ)
+- Główny wniosek (150-250 słów per układ)
 - WAŻNE: interpretuj zgodnie z metodologią danego układu (podaną wyżej)
 
 CZĘŚĆ 2 — ANALIZA KRZYŻOWA (najważniejsza!):
@@ -1100,9 +1100,11 @@ CZĘŚĆ 3 — SYNTEZA I REKOMENDACJE:
 
 STYL:
 - Pisz w drugiej osobie ("Ty", "Ci", "Twój")
-- Mistyczny, ale dostępny język
+- Ton ciepły i wdumliwy, ale przyziemny — MIĘDZY mistyką a suchym pragmatyzmem. Mniej ezoterycznego patosu, więcej konkretu i praktycznych orientirów
+- Wiąż symbolikę ze stanem wewnętrznym i zachowaniami pytającego — pokazuj, jak z tym pracować
+- Pisz ZWIĘŹLE: lepiej mniej zdań, ale każde treściwe. Nie ucinaj sztucznie myśli
 - ZABRONIONE: tabele markdown (|---|---|). Tylko tekst z akapitami
-- Objętość: 3000-5000 słów`;
+- Objętość: 1200-2000 słów`;
 
     const maxOutputTokens = 16384;
 
@@ -1628,7 +1630,7 @@ STRUKTURA INTERPRETACJI:
         specialInstructions = `\nWAŻNE! TO UKŁAD "CYGAŃSKI" — OGÓLNY OBRAZ ŻYCIA BEZ KONKRETNEGO PYTANIA:\n1. WIERZCHOŁEK (karta 1 "Obecna sytuacja") — punkt wyjścia.\n2. LEWA KOLUMNA (karty 2, 4, 6) — "otwarta polityka": co pokazuje światu.\n3. PRAWA KOLUMNA (karty 3, 5, 7) — "ukryte motywy": prawdziwa istota.\n4. Kluczowe porównania: Karta 2 vs 3 (maska vs twarz), Karta 4 vs 5 (marzenia vs rzeczywistość).\n5. Jeśli kolumny kontrastują — człowiek jest nieszczery wobec siebie lub innych.`;
     }
     
-    const prompt = `Jesteś doświadczonym konsultantem tarotowym i mistykiem, biegłym w symbolice Tarota tradycji Waite-Smitha i metodologii Hajo Banzhafa. Daj szczegółową i spersonalizowaną interpretację tego układu po polsku, rozwijając podane opisy kart swoją profesjonalną wiedzą.
+    const prompt = `Jesteś konsultantem tarota z podejściem praktycznego psychologa, biegłym w symbolice Tarota tradycji Waite-Smitha i metodologii Hajo Banzhafa. Czytasz karty jako lustro stanu psychicznego i sytuacji pytającego — łączysz symbolikę kart z rozumieniem jego motywów, emocji i zachowań. Daj spersonalizowaną interpretację tego układu po polsku, rozwijając podane opisy kart swoją wiedzą. Wyjaśniaj nie tylko "co będzie", ale przede wszystkim co układ mówi o wewnętrznym stanie pytającego i jak może z tym pracować.
 
 ${userQuestion ? `PYTANIE KLIENTA: "${userQuestion}"` : 'Klient nie sformułował konkretnego pytania — daj ogólną interpretację.'}
 
@@ -1739,11 +1741,13 @@ INSTRUKCJE DLA GŁĘBOKIEJ INTERPRETACJI:
 
 STYL:
 - Pisz w drugiej osobie ("Ty", "Ci", "Twój")
-- Używaj mistycznego, ale dostępnego języka
+- Ton ciepły i wdumliwy, ale przyziemny — MIĘDZY mistyką a suchym pragmatyzmem. Mniej ezoterycznego patosu, więcej konkretu i praktycznych orientirów
+- Wiąż symbolikę kart ze stanem wewnętrznym, emocjami i zachowaniami pytającego — i pokazuj, jak z tym praktycznie pracować
 - Bądź konkretny, unikaj ogólnikowych fraz
+- Pisz ZWIĘŹLE: lepiej mniej zdań, ale każde treściwe. Nie ucinaj sztucznie myśli — kończ je, tylko bez rozwlekania
 - ZABRONIONE jest używanie tabel markdown (|---|---|). Pisz zwykłym tekstem z akapitami
 - NIE używaj symboli |, :---, tabel czy schematów. Tylko tekst!
-- Objętość: ${drawnCards.length <= 4 ? '800-1200' : drawnCards.length <= 7 ? '1200-2000' : '2000-3000'} słów.`;
+- Objętość: ${drawnCards.length <= 4 ? '400-600' : drawnCards.length <= 7 ? '600-1000' : '1000-1500'} słów.`;
 
     const maxOutputTokens = drawnCards.length <= 4 ? 4096 : drawnCards.length <= 7 ? 8192 : 16384;
 
