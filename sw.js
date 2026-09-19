@@ -1,5 +1,5 @@
-// Zmień wersję przy każdej aktualizacji aplikacji (tarot-pl-v26 → tarot-pl-v27 itd.)
-const CACHE_NAME = 'tarot-pl-v27';
+// Zmień wersję przy każdej aktualizacji aplikacji (tarot-pl-v27 → tarot-pl-v28 itd.)
+const CACHE_NAME = 'tarot-pl-v28';
 const ASSETS = ['./', './index.html'];
 
 // Które requesty cachujemy w runtime przy pierwszym fetchu (lazy cache).
