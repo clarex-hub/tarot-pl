@@ -766,7 +766,7 @@ function renderCards(filter) {
     if (filter === 'major') filtered = cards.filter(c => !c.suit);
     else if (filter !== 'all') filtered = cards.filter(c => c.suit === filter);
     document.getElementById('cards-grid').innerHTML = filtered.map(c =>
-        `<div class="card-item" onclick="openModal(${c.id})"><img src="${c.image}" alt="${c.name}" loading="lazy"><div class="name">${c.name}</div></div>`
+        `<div class="card-item" onclick="openModal(${c.id})"><img src="${esc(c.image)}" alt="${esc(c.name)}" loading="lazy"><div class="name">${esc(c.name)}</div></div>`
     ).join('');
 }
 
@@ -778,12 +778,12 @@ function openModal(id) {
     document.getElementById('modal-suit').textContent = card.nameEn + (card.suit ? ' • ' + card.suit : ' • Wielki Arkan');
     
     document.getElementById('modal-body').innerHTML = `
-        <img src="${card.image}" alt="${card.name}" class="big-card" loading="lazy">
-        <div class="keywords">${card.keywords.map(k => `<span class="keyword">${k}</span>`).join('')}</div>
-        <div class="desc">${card.description}</div>
-        ${card.spiritual ? `<div class="spiritual">🌙 <strong>Aspekt duchowy:</strong> ${card.spiritual}</div>` : ''}
-        <div class="advice">✅ <strong>Rada:</strong> ${card.advice}</div>
-        <div class="warning">⚠️ <strong>Przestroga:</strong> ${card.warning}</div>
+        <img src="${esc(card.image)}" alt="${esc(card.name)}" class="big-card" loading="lazy">
+        <div class="keywords">${card.keywords.map(k => `<span class="keyword">${esc(k)}</span>`).join('')}</div>
+        <div class="desc">${esc(card.description)}</div>
+        ${card.spiritual ? `<div class="spiritual">🌙 <strong>Aspekt duchowy:</strong> ${esc(card.spiritual)}</div>` : ''}
+        <div class="advice">✅ <strong>Rada:</strong> ${esc(card.advice)}</div>
+        <div class="warning">⚠️ <strong>Przestroga:</strong> ${esc(card.warning)}</div>
     `;
     document.getElementById('card-modal').classList.remove('hidden');
 }
@@ -801,13 +801,13 @@ function drawDaily() {
     result.classList.remove('hidden');
     result.innerHTML = `
         <div style="margin-top:1.5rem;">
-            <img src="${card.image}" alt="${card.name}" class="big-card" onclick="openModal(${card.id})" style="max-width:180px;">
-            <h3 style="color:#d4af37;font-family:Cinzel;margin:1rem 0 0.5rem;">${card.name}</h3>
-            <p style="color:#a89984;font-size:0.9rem;">${card.nameEn}${card.suit ? ' • ' + card.suit : ' • Wielki Arkan'}</p>
-            <div class="keywords" style="justify-content:center;margin:0.8rem 0;">${card.keywords.map(k => `<span class="keyword">${k}</span>`).join('')}</div>
+            <img src="${esc(card.image)}" alt="${esc(card.name)}" class="big-card" onclick="openModal(${card.id})" style="max-width:180px;">
+            <h3 style="color:#d4af37;font-family:Cinzel;margin:1rem 0 0.5rem;">${esc(card.name)}</h3>
+            <p style="color:#a89984;font-size:0.9rem;">${esc(card.nameEn)}${card.suit ? ' • ' + esc(card.suit) : ' • Wielki Arkan'}</p>
+            <div class="keywords" style="justify-content:center;margin:0.8rem 0;">${card.keywords.map(k => `<span class="keyword">${esc(k)}</span>`).join('')}</div>
             <div style="max-width:500px;margin:0 auto;text-align:left;">
-                <div class="advice" style="margin-bottom:0.8rem;">✅ <strong>Rada na dziś:</strong> ${card.advice}</div>
-                <div class="warning">⚠️ <strong>Uwaga:</strong> ${card.warning}</div>
+                <div class="advice" style="margin-bottom:0.8rem;">✅ <strong>Rada na dziś:</strong> ${esc(card.advice)}</div>
+                <div class="warning">⚠️ <strong>Uwaga:</strong> ${esc(card.warning)}</div>
             </div>
             <div style="margin-top:1.5rem;display:flex;gap:0.8rem;justify-content:center;flex-wrap:wrap;">
                 <button class="filter-btn" onclick="openModal(${card.id})">Pełny opis karty →</button>
@@ -830,7 +830,7 @@ function resetDaily() {
 // === UKŁADY ===
 function renderSpreads() {
     document.getElementById('spreads-list').innerHTML = `<div class="spread-list">${spreads.map(s =>
-        `<div class="spread-item" onclick="startSpread(${s.id})"><h3>${s.name}</h3><p>${s.desc}</p><p style="color:#d4af37;font-size:0.85rem;margin-top:0.5rem;">🃏 ${s.count} ${s.count === 1 ? 'karta' : s.count < 5 ? 'karty' : 'kart'}</p></div>`
+        `<div class="spread-item" onclick="startSpread(${s.id})"><h3>${esc(s.name)}</h3><p>${esc(s.desc)}</p><p style="color:#d4af37;font-size:0.85rem;margin-top:0.5rem;">🃏 ${s.count} ${s.count === 1 ? 'karta' : s.count < 5 ? 'karty' : 'kart'}</p></div>`
     ).join('')}</div>`;
 }
 
@@ -851,7 +851,7 @@ function startSpread(id) {
     active.classList.remove('hidden');
     
     if (currentSpread.noQuestion) {
-        active.innerHTML = '<div style="text-align:center;"><button class="filter-btn" onclick="showSpreads()">← Wróć</button><h3 style="color:#d4af37;font-size:1.3rem;margin-top:1rem;font-family:Cinzel;">' + currentSpread.name + '</h3><p style="color:#a89984;">' + currentSpread.desc + '</p><div style="margin-top:2rem;max-width:500px;margin-left:auto;margin-right:auto;"><div style="padding:1rem;background:rgba(156,39,176,0.1);border:1px solid rgba(156,39,176,0.3);border-radius:8px;margin-bottom:1.5rem;"><p style="color:#d4c4a8;margin:0;">✨ Ten układ nie wymaga konkretnego pytania.</p><p style="color:#a89984;font-size:0.9rem;margin:0.5rem 0 0;">Opowie o ogólnej sytuacji życiowej, otwartych i ukrytych aspektach Twojej osobowości.</p></div><button class="draw-btn" onclick="drawSpread()">Wyciągnij karty</button></div></div>';
+        active.innerHTML = '<div style="text-align:center;"><button class="filter-btn" onclick="showSpreads()">← Wróć</button><h3 style="color:#d4af37;font-size:1.3rem;margin-top:1rem;font-family:Cinzel;">' + esc(currentSpread.name) + '</h3><p style="color:#a89984;">' + esc(currentSpread.desc) + '</p><div style="margin-top:2rem;max-width:500px;margin-left:auto;margin-right:auto;"><div style="padding:1rem;background:rgba(156,39,176,0.1);border:1px solid rgba(156,39,176,0.3);border-radius:8px;margin-bottom:1.5rem;"><p style="color:#d4c4a8;margin:0;">✨ Ten układ nie wymaga konkretnego pytania.</p><p style="color:#a89984;font-size:0.9rem;margin:0.5rem 0 0;">Opowie o ogólnej sytuacji życiowej, otwartych i ukrytych aspektach Twojej osobowości.</p></div><button class="draw-btn" onclick="drawSpread()">Wyciągnij karty</button></div></div>';
         return;
     }
     
@@ -860,7 +860,7 @@ function startSpread(id) {
         placeholderText = 'Np.: Co będzie, jeśli zmienię pracę, i jak będzie, jeśli zostanę? Co przyniesie podjęcie działania, a co czeka mnie, jeśli poczekam?';
     }
     
-    active.innerHTML = '<div style="text-align:center;"><button class="filter-btn" onclick="showSpreads()">← Wróć</button><h3 style="color:#d4af37;font-size:1.3rem;margin-top:1rem;font-family:Cinzel;">' + currentSpread.name + '</h3><p style="color:#a89984;">' + currentSpread.desc + '</p><div style="margin-top:2rem;max-width:500px;margin-left:auto;margin-right:auto;"><p style="margin-bottom:0.5rem;color:#d4c4a8;">Sformułuj swoje pytanie lub opisz sytuację:</p><textarea class="question-input" id="spread-question" placeholder="' + placeholderText + '"></textarea><p style="margin-bottom:1rem;color:#a89984;font-size:0.9rem;font-style:italic;">Pytanie zostanie użyte do spersonalizowanej interpretacji</p><button class="draw-btn" onclick="drawSpread()">Wyciągnij karty</button></div></div>';
+    active.innerHTML = '<div style="text-align:center;"><button class="filter-btn" onclick="showSpreads()">← Wróć</button><h3 style="color:#d4af37;font-size:1.3rem;margin-top:1rem;font-family:Cinzel;">' + esc(currentSpread.name) + '</h3><p style="color:#a89984;">' + esc(currentSpread.desc) + '</p><div style="margin-top:2rem;max-width:500px;margin-left:auto;margin-right:auto;"><p style="margin-bottom:0.5rem;color:#d4c4a8;">Sformułuj swoje pytanie lub opisz sytuację:</p><textarea class="question-input" id="spread-question" placeholder="' + placeholderText + '"></textarea><p style="margin-bottom:1rem;color:#a89984;font-size:0.9rem;font-style:italic;">Pytanie zostanie użyte do spersonalizowanej interpretacji</p><button class="draw-btn" onclick="drawSpread()">Wyciągnij karty</button></div></div>';
 }
 
 function drawSpread() {
@@ -881,9 +881,9 @@ function renderSpreadCards() {
     const active = document.getElementById('spread-active');
     let html = drawnCards.map((card, i) => {
         if (revealedCards[i]) {
-            return '<div class="spread-card"><img src="' + card.image + '" alt="' + card.name + '" onclick="openModal(' + card.id + ')"><p style="margin:0.3rem 0 0;font-size:0.8rem;">' + card.name + '</p><p class="spread-label">' + currentSpread.positions[i] + '</p></div>';
+            return '<div class="spread-card"><img src="' + esc(card.image) + '" alt="' + esc(card.name) + '" onclick="openModal(' + card.id + ')"><p style="margin:0.3rem 0 0;font-size:0.8rem;">' + esc(card.name) + '</p><p class="spread-label">' + esc(currentSpread.positions[i]) + '</p></div>';
         } else {
-            return '<div class="spread-card"><div class="card-back" onclick="revealSpreadCard(' + i + ')"><span>' + (i+1) + '</span></div><p class="spread-label">' + currentSpread.positions[i] + '</p></div>';
+            return '<div class="spread-card"><div class="card-back" onclick="revealSpreadCard(' + i + ')"><span>' + (i+1) + '</span></div><p class="spread-label">' + esc(currentSpread.positions[i]) + '</p></div>';
         }
     }).join('');
     
@@ -895,7 +895,7 @@ function renderSpreadCards() {
     
     let questionHtml = '';
     if (userQuestion) {
-        questionHtml = '<div style="margin-top:1rem;padding:0.8rem;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);border-radius:8px;max-width:500px;margin-left:auto;margin-right:auto;"><p style="color:#a89984;font-size:0.85rem;margin:0;">Twoje pytanie:</p><p style="color:#e8d5b7;margin:0.3rem 0 0;font-style:italic;">"' + userQuestion + '"</p></div>';
+        questionHtml = '<div style="margin-top:1rem;padding:0.8rem;background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);border-radius:8px;max-width:500px;margin-left:auto;margin-right:auto;"><p style="color:#a89984;font-size:0.85rem;margin:0;">Twoje pytanie:</p><p style="color:#e8d5b7;margin:0.3rem 0 0;font-style:italic;">"' + esc(userQuestion) + '"</p></div>';
     }
     
     let interpretBtn = '';
@@ -903,7 +903,7 @@ function renderSpreadCards() {
         interpretBtn = '<button class="btn-interpret" onclick="getGeminiInterpretation()">🔮 Interpretacja AI</button>';
     }
     
-    active.innerHTML = '<div style="text-align:center;"><button class="filter-btn" onclick="showSpreads()">← Wróć</button><h3 style="color:#d4af37;font-size:1.3rem;margin-top:1rem;font-family:Cinzel;">' + currentSpread.name + '</h3>' + questionHtml + '<div class="' + containerClass + '">' + html + '</div><div style="margin-top:1.5rem;">' + interpretBtn + '<button class="draw-btn" style="margin-left:0.5rem;" onclick="drawSpread()">Nowy układ</button></div></div>';
+    active.innerHTML = '<div style="text-align:center;"><button class="filter-btn" onclick="showSpreads()">← Wróć</button><h3 style="color:#d4af37;font-size:1.3rem;margin-top:1rem;font-family:Cinzel;">' + esc(currentSpread.name) + '</h3>' + questionHtml + '<div class="' + containerClass + '">' + html + '</div><div style="margin-top:1.5rem;">' + interpretBtn + '<button class="draw-btn" style="margin-left:0.5rem;" onclick="drawSpread()">Nowy układ</button></div></div>';
 }
 
 function revealSpreadCard(i) {
@@ -935,12 +935,12 @@ function showHistory() {
     
     histList.innerHTML = '<div style="text-align:right;margin-bottom:1rem;"><button class="btn-del" onclick="clearHistory()">🗑️ Wyczyść wszystko</button></div>' + 
         history.map(item => {
-            const questionHtml = item.question ? '<p style="color:#a89984;font-size:0.85rem;margin:0.5rem 0;font-style:italic;">❓ "' + item.question + '"</p>' : '';
+            const questionHtml = item.question ? '<p style="color:#a89984;font-size:0.85rem;margin:0.5rem 0;font-style:italic;">❓ "' + esc(item.question) + '"</p>' : '';
             const interpretBtn = '<button class="btn-interpret-small" onclick="reinterpretFromHistory(' + item.id + ')">🔮 Interpretacja</button>';
             return '<div class="history-item">' +
-                '<div class="history-header"><div><h4>' + item.spreadName + '</h4><span class="history-date">' + new Date(item.date).toLocaleString('pl-PL') + '</span></div><button class="btn-del" onclick="deleteHistItem(' + item.id + ')">🗑️</button></div>' +
+                '<div class="history-header"><div><h4>' + esc(item.spreadName) + '</h4><span class="history-date">' + new Date(item.date).toLocaleString('pl-PL') + '</span></div><button class="btn-del" onclick="deleteHistItem(' + item.id + ')">🗑️</button></div>' +
                 questionHtml +
-                '<div class="history-cards">' + item.cards.map((c, i) => '<div class="history-mini" title="' + item.positions[i] + ': ' + c.name + '" onclick="openModal(' + c.id + ')"><img src="' + c.image + '" alt="' + c.name + '"></div>').join('') + '</div>' +
+                '<div class="history-cards">' + item.cards.map((c, i) => '<div class="history-mini" title="' + esc((item.positions[i] || '') + ': ' + c.name) + '" onclick="openModal(' + c.id + ')"><img src="' + esc(c.image) + '" alt="' + esc(c.name) + '"></div>').join('') + '</div>' +
                 '<div style="margin-top:0.5rem;">' + interpretBtn + '</div></div>';
         }).join('');
 }
@@ -981,11 +981,11 @@ function renderAnalysisPage() {
                 <div class="analysis-check" id="analysis-check-${item.id}">☐</div>
                 <div style="flex:1;">
                     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.3rem;">
-                        <strong style="color:#d4af37;font-family:'Cinzel',serif;">${item.spreadName}</strong>
+                        <strong style="color:#d4af37;font-family:'Cinzel',serif;">${esc(item.spreadName)}</strong>
                         <span style="color:#a89984;font-size:0.8rem;">${date}</span>
                     </div>
-                    ${item.question ? `<p style="color:#e8d5b7;font-style:italic;margin:0.3rem 0;font-size:0.9rem;">"${item.question}"</p>` : '<p style="color:#a89984;font-size:0.85rem;margin:0.3rem 0;">Bez pytania</p>'}
-                    <div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-top:0.4rem;">${item.cards.map(c => `<div class="history-mini"><img src="${c.image}" alt="${c.name}" title="${c.name}"></div>`).join('')}</div>
+                    ${item.question ? `<p style="color:#e8d5b7;font-style:italic;margin:0.3rem 0;font-size:0.9rem;">"${esc(item.question)}"</p>` : '<p style="color:#a89984;font-size:0.85rem;margin:0.3rem 0;">Bez pytania</p>'}
+                    <div style="display:flex;gap:0.3rem;flex-wrap:wrap;margin-top:0.4rem;">${item.cards.map(c => `<div class="history-mini"><img src="${esc(c.image)}" alt="${esc(c.name)}" title="${esc(c.name)}"></div>`).join('')}</div>
                 </div>
             </div>
         </div>`;
@@ -1253,12 +1253,12 @@ function showAdminTab(tab) {
 }
 
 function renderAdminCards() {
-    document.getElementById('admin-cards').innerHTML = '<table class="admin-table"><thead><tr><th>Obr.</th><th>Nazwa</th><th>Kolor</th><th>Akcje</th></tr></thead><tbody>' + cards.map(c => '<tr><td><img src="' + c.image + '" alt="" loading="lazy"></td><td><strong>' + c.name + '</strong><br><small style="color:#a89984;">' + c.nameEn + '</small></td><td>' + (c.suit || 'Wielkie') + '</td><td class="actions"><button class="btn-secondary" onclick="editCard(' + c.id + ')">✏️</button></td></tr>').join('') + '</tbody></table>';
+    document.getElementById('admin-cards').innerHTML = '<table class="admin-table"><thead><tr><th>Obr.</th><th>Nazwa</th><th>Kolor</th><th>Akcje</th></tr></thead><tbody>' + cards.map(c => '<tr><td><img src="' + esc(c.image) + '" alt="" loading="lazy"></td><td><strong>' + esc(c.name) + '</strong><br><small style="color:#a89984;">' + esc(c.nameEn) + '</small></td><td>' + esc(c.suit || 'Wielkie') + '</td><td class="actions"><button class="btn-secondary" onclick="editCard(' + c.id + ')">✏️</button></td></tr>').join('') + '</tbody></table>';
 }
 
 function renderAdminSpreads() {
     const layoutNames = { line: 'Linia', cross4: 'Krzyż', celtic: 'Krzyż Celtycki', choice: 'Wybór', gypsy: 'Cygański' };
-    document.getElementById('admin-spreads').innerHTML = '<button class="btn-primary" style="width:auto;margin-bottom:1rem;" onclick="addSpread()">+ Dodaj układ</button><table class="admin-table"><thead><tr><th>Nazwa</th><th>Opis</th><th>Kart</th><th>Typ</th><th>Akcje</th></tr></thead><tbody>' + spreads.map(s => '<tr><td><strong>' + s.name + '</strong></td><td>' + s.desc + '</td><td>' + s.count + '</td><td>' + (layoutNames[s.layout] || 'Linia') + '</td><td class="actions"><button class="btn-secondary" onclick="editSpread(' + s.id + ')">✏️</button><button class="btn-danger" onclick="deleteSpread(' + s.id + ')">🗑️</button></td></tr>').join('') + '</tbody></table>';
+    document.getElementById('admin-spreads').innerHTML = '<button class="btn-primary" style="width:auto;margin-bottom:1rem;" onclick="addSpread()">+ Dodaj układ</button><table class="admin-table"><thead><tr><th>Nazwa</th><th>Opis</th><th>Kart</th><th>Typ</th><th>Akcje</th></tr></thead><tbody>' + spreads.map(s => '<tr><td><strong>' + esc(s.name) + '</strong></td><td>' + esc(s.desc) + '</td><td>' + s.count + '</td><td>' + (layoutNames[s.layout] || 'Linia') + '</td><td class="actions"><button class="btn-secondary" onclick="editSpread(' + s.id + ')">✏️</button><button class="btn-danger" onclick="deleteSpread(' + s.id + ')">🗑️</button></td></tr>').join('') + '</tbody></table>';
 }
 
 function renderAdminSettings() {
@@ -1487,8 +1487,8 @@ Jedno krótkie zdanie-przestroga. Bez straszenia.`;
         
         content.innerHTML = `
             <div style="background:rgba(212,175,55,0.1);border:1px solid rgba(212,175,55,0.3);border-radius:8px;padding:1rem;margin-bottom:1.5rem;text-align:center;">
-                <h3 style="color:#d4af37;margin:0;font-family:Cinzel;">${card.name}</h3>
-                <p style="color:#a89984;font-size:0.9rem;margin:0.5rem 0 0;">${card.nameEn}</p>
+                <h3 style="color:#d4af37;margin:0;font-family:Cinzel;">${esc(card.name)}</h3>
+                <p style="color:#a89984;font-size:0.9rem;margin:0.5rem 0 0;">${esc(card.nameEn)}</p>
             </div>
             <div id="streaming-text" style="line-height:1.8;"></div>
             <span id="streaming-cursor" style="display:inline-block;width:3px;height:1.2em;background:linear-gradient(180deg,#d4af37,#f4d03f);animation:blink 0.7s infinite;margin-left:3px;vertical-align:middle;box-shadow:0 0 8px #d4af37;"></span>
