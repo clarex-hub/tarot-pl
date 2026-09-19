@@ -415,7 +415,6 @@ function esc(s) {
 function formatAiHtml(text) {
     const html = esc(text)
         .replace(/\*\*(.+?)\*\*/g, '<strong style="color:#d4af37;">$1</strong>')
-        .replace(/\*(.+?)\*/g, '<em>$1</em>')
         .replace(/### (.+)/g, '<h4 style="color:#d4af37;margin:1.2rem 0 0.5rem;">$1</h4>')
         .replace(/## (.+)/g, '<h3 style="color:#d4af37;font-family:Cinzel,serif;margin:1.5rem 0 0.8rem;font-size:1.2rem;">$1</h3>')
         .replace(/# (.+)/g, '<h3 style="color:#d4af37;font-family:Cinzel,serif;margin:1.5rem 0 0.8rem;font-size:1.3rem;">$1</h3>')
