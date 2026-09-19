@@ -1,5 +1,5 @@
 // Zmień wersję przy każdej aktualizacji aplikacji (tarot-pl-v10 → tarot-pl-v12 itd.)
-const CACHE_NAME = 'tarot-pl-v23';
+const CACHE_NAME = 'tarot-pl-v24';
 const ASSETS = ['./', './index.html'];
 
 self.addEventListener('install', event => {
