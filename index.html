@@ -36,7 +36,6 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
         *, *::before, *::after { box-sizing: border-box; }
-        html, body { overflow-x: clip; width: 100%; }
         body { font-family: 'Cormorant Garamond', serif; background: #0a0a12; min-height: 100vh; min-height: -webkit-fill-available; color: #e8d5b7; overscroll-behavior: none; overflow-wrap: break-word; word-wrap: break-word; -webkit-text-size-adjust: 100%; text-size-adjust: 100%; padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
         img { max-width: 100%; height: auto; }
         @media (display-mode: standalone) { header { padding-top: calc(1rem + env(safe-area-inset-top)); } footer { padding-bottom: calc(1rem + env(safe-area-inset-bottom)); } }
@@ -45,7 +44,7 @@
         @keyframes stars { to { transform: translateY(-50%); } }
         .nebula { position: absolute; inset: 0; opacity: 0.4; background: radial-gradient(ellipse at 20% 80%, rgba(120,60,180,0.3) 0%, transparent 50%), radial-gradient(ellipse at 80% 20%, rgba(60,100,180,0.3) 0%, transparent 50%); }
         .moon { position: absolute; top: 8%; right: 12%; width: 100px; height: 100px; border-radius: 50%; background: radial-gradient(circle at 30% 30%, rgba(255,250,230,0.15) 0%, transparent 70%); box-shadow: 0 0 50px rgba(255,250,230,0.1); }
-        .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; overflow-x: clip; width: 100%; max-width: 100%; }
+        .app { position: relative; z-index: 1; min-height: 100vh; display: flex; flex-direction: column; }
         header { text-align: center; padding: 2rem 1rem; border-bottom: 1px solid rgba(212,175,55,0.2); background: linear-gradient(180deg, rgba(0,0,0,0.7), rgba(0,0,0,0.3)); position: relative; }
         .title { font-family: 'Cinzel', serif; font-size: 2.5rem; color: #d4af37; text-shadow: 0 0 30px rgba(212,175,55,0.5); letter-spacing: 0.1em; cursor: pointer; user-select: none; }
         .subtitle { font-size: 1.1rem; color: #a89984; margin-top: 0.5rem; font-style: italic; }
